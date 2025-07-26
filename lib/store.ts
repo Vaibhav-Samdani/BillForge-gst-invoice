@@ -117,19 +117,19 @@ const useInvoiceStore = create<InvoiceState>()(
           name: "SHREE GANPATI SANITARY",
           address:
             "Nayi Aabadi Nahri, Raipur Road, Nahri, Teh. Raipur, Bhilwara, Rajasthan 311803",
-          phone: "8955643509",
-          gstin: "08GWPPB1989N1ZS",
-          email: "sanitaryganpati@gmail.com",
+          phone: "8955555509",
+          gstin: "08GWPPB19XXX1ZS",
+          email: "sanitaryati@gmail.com",
           company: "",
         },
         client: {
-          name: "Vaibhav Samdani",
+          name: "Vaibhadani",
           company: "Sanitary Sanitary",
           address:
-            "SHOP NO O1, Mohan Market, Bigod, Bhilwara, Rajasthan, 311601",
+            "SHOP NO O1, Mohan Market, Bigod, Bhira, Rajasthan, 311601",
           phone: "9079245896",
           email: "",
-          gstin: "08GEPPB1959N1ZS",
+          gstin: "08GEPPB1xx9N1ZS",
         },
         items: [
           {

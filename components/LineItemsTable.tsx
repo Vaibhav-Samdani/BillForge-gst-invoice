@@ -30,11 +30,11 @@ export default function LineItemsTable() {
         <h2 className="text-lg font-semibold">Items</h2>
         <div className="flex flex-col lg:flex-row items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <Switch
+            {/* <Switch
               id="same-gst"
               checked={sameGst}
               onCheckedChange={setSameGst}
-            />
+            /> */}
             <Label htmlFor="same-gst">Apply same GST to all items</Label>
           </div>
           {sameGst && (

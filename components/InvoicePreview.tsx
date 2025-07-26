@@ -4,7 +4,6 @@ import useInvoiceStore, { useSafeInvoiceTotals } from "@/lib/store";
 import { InvoiceDoc } from "./template/Invoice";
 import { formatDate } from "@/lib/utils";
 import dynamic from "next/dynamic";
-import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Button } from "./ui/button";
 
 export default function InvoicePreview() {
@@ -20,10 +19,14 @@ export default function InvoicePreview() {
     () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
     { ssr: false }
   );
+  const PDFDownloadLink = dynamic(
+    () => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
+    { ssr: false }
+  );
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-md flex flex-col gap-4">
-      <Button>
+      <Button >
         <PDFDownloadLink
           document={
             <InvoiceDoc

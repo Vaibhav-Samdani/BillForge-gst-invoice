@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
+/* Color palette inspired by Notion */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f6f3;
+  --foreground: #232629;
+  --muted: #e3e2df;
+  --border: #e0e0e0;
+  --primary: #2f76da;
+  --secondary: #f5c518;
+  --accent: #eab308;
+  --danger: #e45735;
+  --success: #4bb543;
+  /* --font-sans: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Fira Mono', 'Menlo', monospace; */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #181a1b;
+    --foreground: #f7f6f3;
+    --muted: #232629;
+    --border: #232629;
+    --primary: #539bf5;
+    --secondary: #ffe066;
+    --accent: #facc15;
+    --danger: #ff6b6b;
+    --success: #51fa7b;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* font-family: var(--font-sans); */
+  transition: background 0.2s, color 0.2s;
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+a:hover {
+  text-decoration: underline;
+  color: var(--accent);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+code, pre {
+  /* font-family: var(--font-mono); */
+  background: var(--muted);
+  color: var(--foreground);
+  border-radius: 4px;
+  padding: 0.2em 0.4em;
+}
+
+button, input, select, textarea {
+  /* font-family: inherit; */
+  border: 1px solid var(--border);
+  background: var(--muted);
+  color: var(--foreground);
+  border-radius: 6px;
+  padding: 0.5em 1em;
+  transition: border 0.2s, background 0.2s;
+}
+
+button:hover, input:focus, select:focus, textarea:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: var(--muted);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--primary);
+  color: #fff;
 }
