@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import useInvoiceStore from "@/lib/store";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
 export default function LineItemsTable() {
@@ -20,7 +19,7 @@ export default function LineItemsTable() {
   const updateItem = useInvoiceStore((state) => state.updateItem);
   const removeItem = useInvoiceStore((state) => state.removeItem);
   const sameGst = useInvoiceStore((state) => state.sameGst);
-  const setSameGst = useInvoiceStore((state) => state.setSameGst);
+  // const setSameGst = useInvoiceStore((state) => state.setSameGst);
   const globalGst = useInvoiceStore((state) => state.globalGst);
   const setGlobalGst = useInvoiceStore((state) => state.setGlobalGst);
 

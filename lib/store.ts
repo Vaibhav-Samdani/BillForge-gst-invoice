@@ -81,21 +81,23 @@ const calculateTotals = (state: InvoiceData): InvoiceTotals => {
   // GST Calculation
   // Check if stateCode exists before comparing
   let cgst = 0,
-    sgst = 0,
-    igst = 0;
+    sgst = 0;
+    const igst = 0;
 
   state.items.forEach((item) => {
     const gstAmount = (item.amount * item.gst) / 100;
     cgst += gstAmount / 2;
     sgst += gstAmount / 2;
+
   });
 
   // let total = subtotal + cgst + sgst + igst;
-  let total = subtotal + cgst + sgst + igst;
+  let total = subtotal + cgst + sgst ;
   const round_off = Math.round(total) - total;
   total = Math.round(total); 
 
   return { subtotal, cgst, sgst, igst, round_off, total };
+  // return { subtotal, cgst, sgst,  round_off, total };
 };
 
 // Create default totals object

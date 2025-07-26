@@ -15,18 +15,17 @@ export default function InvoicePreview() {
 
   const totals = useSafeInvoiceTotals();
 
-  const PDFViewer = dynamic(
-    () => import("@react-pdf/renderer").then((mod) => mod.PDFViewer),
-    { ssr: false }
-  );
+  const PDFViewer = dynamic(() => import("./pdf/PDFViewerWrapper"), {
+    ssr: false,
+  });
   const PDFDownloadLink = dynamic(
-    () => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
+    () => import("./pdf/PDFDownloadLinkWrapper"),
     { ssr: false }
   );
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-md flex flex-col gap-4">
-      <Button >
+      <Button>
         <PDFDownloadLink
           document={
             <InvoiceDoc
@@ -40,7 +39,7 @@ export default function InvoicePreview() {
           }
           fileName={`invoice-${invoiceNumber}-${client.name}.pdf`}
         >
-          {({ blob, url, loading, error }) =>
+          {({  loading, }) =>
             loading ? "Loading document..." : "Download now!"
           }
         </PDFDownloadLink>
