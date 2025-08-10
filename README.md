@@ -3,9 +3,11 @@
 BillForge is a smart, modern, and open-source GST invoice generator built for freelancers, small businesses, and agencies in India. With an intuitive UI and instant PDF export, BillForge makes billing seamless, elegant, and efficient.
 
 ## 🚀 Live Demo
+
 🔗 [Live App](https://bill-forge-gst.vercel.app/)
 
 ## 💻 Source Code
+
 📦 [GitHub Repository](https://github.com/Vaibhav-Samdani/BillForge-gst-invoice)
 
 ---
@@ -37,13 +39,16 @@ BillForge is a smart, modern, and open-source GST invoice generator built for fr
 [
   "Next.js",
   "React",
+  "Zustand",
   "TailwindCSS",
   "Shadcn/ui",
   "TypeScript",
   "HTML5/CSS3"
 ]
 ```
-## 🧠 How to Run 
+
+## 🧠 How to Run
+
 First, run the development server:
 
 ```bash
@@ -57,5 +62,3 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-
