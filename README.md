@@ -169,7 +169,7 @@ BillForge-gst-invoice/
 
 ---
 
- **👨‍💻 Developed By**  **❤️Vaibhav-Samdani** 
+ **👨‍💻 Developed By**  **❤️Vaibhav-Samdani❤️** 
 [GitHub](https://github.com/Vaibhav-Samdani) | [LinkedIn](https://www.linkedin.com/in/vaibhav-samdani/)
 
 
