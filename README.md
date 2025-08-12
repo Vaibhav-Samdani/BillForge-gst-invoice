@@ -168,9 +168,9 @@ BillForge-gst-invoice/
 🚀 **Simplifying GST Compliance – One Invoice at a Time!** 🌍☀️🌧️
 
 ---
-<div align="center">
+
  **👨‍💻 Developed By**  **❤️Vaibhav-Samdani** 
 [GitHub](https://github.com/Vaibhav-Samdani) | [LinkedIn](https://www.linkedin.com/in/vaibhav-samdani/)
-</div>
+
 
 [🔝 Back to Top](#top)
