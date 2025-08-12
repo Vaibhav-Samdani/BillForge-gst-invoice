@@ -1,10 +1,10 @@
 "use client";
 
 import useInvoiceStore, { useSafeInvoiceTotals } from "@/lib/store";
-import { InvoiceDoc } from "./template/Invoice";
+import { InvoiceDoc } from "../Templates/Invoice";
 import { formatDate } from "@/lib/utils";
 import dynamic from "next/dynamic";
-import { Button } from "./ui/button";
+import { Button } from "../../ui/button";
 
 export default function InvoicePreview() {
   const business = useInvoiceStore((state) => state.business);
@@ -15,11 +15,11 @@ export default function InvoicePreview() {
 
   const totals = useSafeInvoiceTotals();
 
-  const PDFViewer = dynamic(() => import("./pdf/PDFViewerWrapper"), {
+  const PDFViewer = dynamic(() => import("../../pdf/PDFViewerWrapper"), {
     ssr: false,
   });
   const PDFDownloadLink = dynamic(
-    () => import("./pdf/PDFDownloadLinkWrapper"),
+    () => import("../../pdf/PDFDownloadLinkWrapper"),
     { ssr: false }
   );
 
