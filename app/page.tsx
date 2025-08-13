@@ -3,8 +3,8 @@ import React from "react";
 import Header from "@/components/layout/Header";
 import BusinessInfoForm from "@/components/forms/BusinessInfoForm";
 import ClientInfoForm from "@/components/forms/ClientInfoForm";
-import LineItemsTableNew from "@/components/forms/LineItemsTableNew";
-import InvoiceSummaryNew from "@/components/forms/InvoiceSummaryNew";
+import LineItemsTable from "@/components/forms/LineItemsTable";
+import InvoiceSummary from "@/components/forms/InvoiceSummary";
 import InvoicePreviewPanel from "@/components/invoice/InvoicePreviewPanel";
 
 const page = () => {
@@ -16,8 +16,8 @@ const page = () => {
           <div className="space-y-6">
             <BusinessInfoForm />
             <ClientInfoForm />
-            <LineItemsTableNew />
-            <InvoiceSummaryNew />
+            <LineItemsTable />
+            <InvoiceSummary />
           </div>
           <InvoicePreviewPanel />
         </div>

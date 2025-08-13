@@ -1,161 +1,135 @@
 "use client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
 import useInvoiceStore from "@/lib/store";
-import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import ItemModal from "./ItemModal";
+import type { LineItem } from "@/lib/store";
 
 export default function LineItemsTable() {
   const items = useInvoiceStore((state) => state.items);
-  const addItem = useInvoiceStore((state) => state.addItem);
-  const updateItem = useInvoiceStore((state) => state.updateItem);
   const removeItem = useInvoiceStore((state) => state.removeItem);
   const sameGst = useInvoiceStore((state) => state.sameGst);
-  // const setSameGst = useInvoiceStore((state) => state.setSameGst);
+  const setSameGst = useInvoiceStore((state) => state.setSameGst);
   const globalGst = useInvoiceStore((state) => state.globalGst);
   const setGlobalGst = useInvoiceStore((state) => state.setGlobalGst);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<LineItem | null>(null);
+
+  const handleAddItem = () => {
+    setEditingItem(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditItem = (item: LineItem) => {
+    setEditingItem(item);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingItem(null);
+  };
+
   return (
-    <div className="overflow-hidden border rounded-lg">
-      <div className="flex flex-col md:flex-row items-center justify-between p-4 bg-white border-b">
-        <h2 className="text-lg font-semibold">Items</h2>
-        <div className="flex flex-col lg:flex-row items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            {/* <Switch
-              id="same-gst"
+    <div className="notion-style">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="notion-header mb-0">Items</h2>
+        <div className="flex items-center space-x-4">
+          <label className="flex items-center text-sm font-medium text-gray-700">
+            <input
+              type="checkbox"
               checked={sameGst}
-              onCheckedChange={setSameGst}
-            /> */}
-            <Label htmlFor="same-gst">Apply same GST to all items</Label>
-          </div>
+              onChange={(e) => setSameGst(e.target.checked)}
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-2"
+            />
+            Apply same GST to all items
+          </label>
           {sameGst && (
-            <div className="flex items-center space-x-2">
-              <Label>GST %</Label>
-              <Input
-                type="number"
-                value={globalGst}
-                onChange={(e) => setGlobalGst(Number(e.target.value))}
-                className="w-20"
-                min={0}
-                max={100}
-              />
-            </div>
+            <select 
+              value={globalGst} 
+              onChange={(e) => setGlobalGst(Number(e.target.value))}
+              className="form-input w-auto"
+            >
+              <option value={0}>GST 0%</option>
+              <option value={5}>GST 5%</option>
+              <option value={12}>GST 12%</option>
+              <option value={18}>GST 18%</option>
+              <option value={28}>GST 28%</option>
+            </select>
           )}
-          <Button onClick={addItem}>Add Item</Button>
+          <button onClick={handleAddItem} className="btn btn-primary">
+            <span className="material-icons mr-2 text-sm">add</span>
+            Add Item
+          </button>
         </div>
       </div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="table-header text-left text-gray-600">
+              <th className="table-cell font-medium rounded-l-md">Description</th>
+              <th className="table-cell font-medium">HSN/SAC</th>
+              <th className="table-cell font-medium">Qty</th>
+              <th className="table-cell font-medium">Rate (₹)</th>
+              <th className="table-cell font-medium">Per</th>
+              <th className="table-cell font-medium">GST %</th>
+              <th className="table-cell font-medium">Amount (₹)</th>
+              <th className="table-cell font-medium rounded-r-md">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="table-cell text-center text-gray-500 py-8">
+                  No items added yet. Click &quot;Add Item&quot; to get started.
+                </td>
+              </tr>
+            ) : (
+              items.map((item) => (
+                <tr key={item.id} className="border-b border-gray-200">
+                  <td className="table-cell cursor-pointer hover:bg-gray-50" onClick={() => handleEditItem(item)}>
+                    <div className="flex items-center">
+                      <span className="material-icons text-sm text-gray-400 mr-2">edit</span>
+                      {item.description || "Click to edit"}
+                    </div>
+                  </td>
+                  <td className="table-cell">{item.hsnSac}</td>
+                  <td className="table-cell">{item.quantity}</td>
+                  <td className="table-cell">₹{item.rate.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  <td className="table-cell">{item.per}</td>
+                  <td className="table-cell">{item.gst}%</td>
+                  <td className="table-cell">₹{item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                  <td className="table-cell">
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleEditItem(item)}
+                        className="text-blue-500 hover:text-blue-700"
+                        title="Edit item"
+                      >
+                        <span className="material-icons text-sm">edit</span>
+                      </button>
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        className="text-red-500 hover:text-red-700"
+                        title="Delete item"
+                      >
+                        <span className="material-icons text-sm">delete</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[200px]">Description</TableHead>
-            <TableHead className="w-[100px]">HSN/SAC</TableHead>
-            <TableHead className="w-[80px]">Qty</TableHead>
-            <TableHead className="w-[100px]">Rate (₹)</TableHead>
-            <TableHead className="w-[80px]">Per</TableHead>
-            {!sameGst && <TableHead className="w-[100px]">GST (%)</TableHead>}
-            <TableHead className="w-[120px]">Amount (₹)</TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>
-                <Input
-                  placeholder="Description/Product Name"
-                  value={item.description}
-                  className="min-w-30"
-                  onChange={(e) =>
-                    updateItem(item.id, { description: e.target.value })
-                  }
-                />
-              </TableCell>
-              <TableCell>
-                <Input
-                  placeholder="HSN/SAC"
-                  value={item.hsnSac}
-                  className="min-w-20"
-                  onChange={(e) =>
-                    updateItem(item.id, { hsnSac: e.target.value })
-                  }
-                />
-              </TableCell>
-              <TableCell>
-                <Input
-                  placeholder="Quantity"
-                  type="number"
-                  className="min-w-20"
-                  value={item.quantity}
-                  onChange={(e) => {
-                    updateItem(item.id, {
-                      quantity: Number(e.target.value),
-                    });
-                  }}
-                />
-              </TableCell>
-              <TableCell>
-                <Input
-                  placeholder="Rate"
-                  type="number"
-                  className="min-w-20"
-                  value={item.rate}
-                  onChange={(e) =>
-                    updateItem(item.id, {
-                      rate: Number(e.target.value),
-                    })
-                  }
-                />
-              </TableCell>
-              <TableCell>
-                <Input
-                  placeholder="PER"
-                  value={item.per}
-                  className="min-w-20"
-                  onChange={(e) => updateItem(item.id, { per: e.target.value })}
-                />
-              </TableCell>
-              {!sameGst && (
-                <TableCell>
-                  <Input
-                    type="number"
-                    placeholder="GST"
-                    value={sameGst ? globalGst : item.gst}
-                    onChange={(e) =>
-                      updateItem(item.id, { gst: Number(e.target.value) })
-                    }
-                    disabled={sameGst}
-                  />
-                </TableCell>
-              )}
-              <TableCell className="font-medium">
-                {new Intl.NumberFormat("en-IN", {
-                  style: "currency",
-                  currency: "INR",
-                  maximumFractionDigits: 2,
-                }).format(item.amount)}
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeItem(item.id)}
-                >
-                  <Trash2 className="w-4 h-4 text-red-500" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <ItemModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        item={editingItem}
+        isEdit={!!editingItem}
+      />
     </div>
   );
 }

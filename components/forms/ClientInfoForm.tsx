@@ -1,4 +1,5 @@
 "use client";
+
 import useInvoiceStore from "@/lib/store";
 
 export default function ClientInfoForm() {
@@ -8,71 +9,76 @@ export default function ClientInfoForm() {
   return (
     <div className="notion-style">
       <h2 className="notion-header">Client Information</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-4">
         <div>
-          <label className="form-label" htmlFor="clientName">Client Name</label>
+          <label className="form-label" htmlFor="clientName">Name:</label>
           <input
             className="form-input"
             id="clientName"
             type="text"
             value={client.name}
-            onChange={(e) => setClient({ name: e.target.value })}
-            placeholder="Vaibhavdani"
+            onChange={(e) => setClient({ ...client, name: e.target.value })}
+            placeholder="Enter client name"
           />
         </div>
+
         <div>
-          <label className="form-label" htmlFor="clientCompany">Company (Optional)</label>
+          <label className="form-label" htmlFor="clientCompany">Company:</label>
           <input
             className="form-input"
             id="clientCompany"
             type="text"
             value={client.company}
-            onChange={(e) => setClient({ company: e.target.value })}
-            placeholder="Sanitary Sanitary"
+            onChange={(e) => setClient({ ...client, company: e.target.value })}
+            placeholder="Enter company name"
           />
         </div>
+
         <div>
-          <label className="form-label" htmlFor="clientEmail">Email</label>
+          <label className="form-label" htmlFor="clientEmail">Email:</label>
           <input
             className="form-input"
             id="clientEmail"
             type="email"
             value={client.email}
-            onChange={(e) => setClient({ email: e.target.value })}
-            placeholder="client@example.com"
+            onChange={(e) => setClient({ ...client, email: e.target.value })}
+            placeholder="Enter email address"
           />
         </div>
+
         <div>
-          <label className="form-label" htmlFor="clientPhone">Phone</label>
+          <label className="form-label" htmlFor="clientPhone">Phone:</label>
           <input
             className="form-input"
             id="clientPhone"
-            type="text"
+            type="tel"
             value={client.phone}
-            onChange={(e) => setClient({ phone: e.target.value })}
-            placeholder="9876543595"
+            onChange={(e) => setClient({ ...client, phone: e.target.value })}
+            placeholder="Enter phone number"
           />
         </div>
-        <div className="md:col-span-2">
-          <label className="form-label" htmlFor="clientAddress">Address</label>
-          <input
+
+        <div>
+          <label className="form-label" htmlFor="clientAddress">Address:</label>
+          <textarea
             className="form-input"
             id="clientAddress"
-            type="text"
+            rows={3}
             value={client.address}
-            onChange={(e) => setClient({ address: e.target.value })}
-            placeholder="SHOP NO-D1, Mohan Market, Bigod, Bhvs, Rajasthan, 311601"
+            onChange={(e) => setClient({ ...client, address: e.target.value })}
+            placeholder="Enter client address"
           />
         </div>
-        <div className="md:col-span-2">
-          <label className="form-label" htmlFor="clientGstin">GSTIN/UIN</label>
+
+        <div>
+          <label className="form-label" htmlFor="clientGstin">GSTIN:</label>
           <input
             className="form-input"
             id="clientGstin"
             type="text"
             value={client.gstin}
-            onChange={(e) => setClient({ gstin: e.target.value })}
-            placeholder="08CGPPB7908K1Z5"
+            onChange={(e) => setClient({ ...client, gstin: e.target.value })}
+            placeholder="Enter GSTIN (if applicable)"
           />
         </div>
       </div>
