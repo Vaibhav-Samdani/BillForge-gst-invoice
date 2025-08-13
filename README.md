@@ -1,6 +1,6 @@
 # 📄 BillForge – GST Invoice Generator
 
-![GSSoC Logo](/BillForge-gst-invoice/public/gssoc%20logo.png)
+![Logo](https://github.com/Vaibhav-Samdani/BillForge-gst-invoice/blob/master/public/logo.png)
 
 [![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/Apertre-2-0)
 
@@ -158,9 +158,11 @@ BillForge-gst-invoice/
   <h2 style="font-size:3rem;">Our Contributors <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="40" height="40" /></h2>
   </div>
   <h3>Thanks to these amazing people who have contributed to the **BillForge-gst-invoice** project:</h3>
-<p align="center">
-    <img src="https://api.vaunt.dev/v1/github/entities/Vaibhav-Samdani/repositories/BillForge-gst-invoice/contributors?format=svg&limit=54" width="1000" />
-</p>
+<!-- readme: contributors -start -->
+<a href="https://github.com/Vaibhav-Samdani/BillForge-gst-invoice/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Vaibhav-Samdani/BillForge-gst-invoice" />
+</a>
+<!-- readme: contributors -end -->
 <p style="font-family:var(--ff-philosopher);font-size:3rem;"><b> Show some <img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Smilies/Red%20Heart.png" alt="Red Heart" width="40" height="40" /> by starring this awesome repository!
 </p>
 
