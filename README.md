@@ -2,7 +2,7 @@
 
 ![Logo](https://github.com/Vaibhav-Samdani/BillForge-gst-invoice/blob/master/public/logo.png)
 
-[![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/Apertre-2-0)
+[![Open Source](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/Vaibhav-Samdani)
 
 <table align="center">
     <thead align="center">
@@ -170,7 +170,9 @@ BillForge-gst-invoice/
 🚀 **Simplifying GST Compliance – One Invoice at a Time!** 🌍☀️🌧️
 
 ---
- **👨‍💻 Developed By**  **❤️Vaibhav-Samdani** 
+
+ **👨‍💻 Developed By**  **❤️Vaibhav-Samdani❤️** 
 [GitHub](https://github.com/Vaibhav-Samdani) | [LinkedIn](https://www.linkedin.com/in/vaibhav-samdani/)
+
 
 [🔝 Back to Top](#top)
