@@ -11,15 +11,17 @@ const page = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="py-10">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 px-4 sm:px-6 lg:px-8">
-          <div className="space-y-6">
+      <main className="py-4 sm:py-6 lg:py-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 px-2 sm:px-4 lg:px-8">
+          <div className="space-y-4 sm:space-y-6">
             <BusinessInfoForm />
             <ClientInfoForm />
             <LineItemsTable />
             <InvoiceSummary />
           </div>
-          <InvoicePreviewPanel />
+          <div className="order-first xl:order-last">
+            <InvoicePreviewPanel />
+          </div>
         </div>
       </main>
     </div>

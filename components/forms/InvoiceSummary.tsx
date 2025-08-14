@@ -29,8 +29,8 @@ export default function InvoiceSummary() {
   return (
     <div className="notion-style">
       <h2 className="notion-header">Invoice Summary</h2>
-      <div className="space-y-3">
-        <div className="flex justify-between items-center text-gray-600">
+      <div className="space-y-2 sm:space-y-3">
+        <div className="flex justify-between items-center text-gray-600 text-sm sm:text-base">
           <span>Subtotal:</span>
           <span className="font-medium text-gray-800">
             ₹{totals.subtotal.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
@@ -38,7 +38,7 @@ export default function InvoiceSummary() {
         </div>
         
         {totals.igst > 0 ? (
-          <div className="flex justify-between items-center text-gray-600">
+          <div className="flex justify-between items-center text-gray-600 text-sm sm:text-base">
             <span>IGST:</span>
             <span className="font-medium text-gray-800">
               ₹{totals.igst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
@@ -46,13 +46,13 @@ export default function InvoiceSummary() {
           </div>
         ) : (
           <>
-            <div className="flex justify-between items-center text-gray-600">
+            <div className="flex justify-between items-center text-gray-600 text-sm sm:text-base">
               <span>CGST:</span>
               <span className="font-medium text-gray-800">
                 ₹{totals.cgst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
               </span>
             </div>
-            <div className="flex justify-between items-center text-gray-600">
+            <div className="flex justify-between items-center text-gray-600 text-sm sm:text-base">
               <span>SGST:</span>
               <span className="font-medium text-gray-800">
                 ₹{totals.sgst.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
@@ -61,7 +61,7 @@ export default function InvoiceSummary() {
           </>
         )}
         
-        <div className="flex justify-between items-center text-gray-600">
+        <div className="flex justify-between items-center text-gray-600 text-sm sm:text-base">
           <span>Round Off:</span>
           <span className="font-medium text-gray-800">
             ₹{totals.round_off.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
@@ -70,16 +70,16 @@ export default function InvoiceSummary() {
         
         <hr className="my-2" />
         
-        <div className="flex justify-between items-center font-bold text-lg text-gray-900">
+        <div className="flex justify-between items-center font-bold text-base sm:text-lg text-gray-900">
           <span>Net Total:</span>
           <span>₹{totals.total.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
         </div>
       </div>
       
-      <div className="mt-6">
-        <label className="form-label" htmlFor="totalInWords">Total (in words):</label>
+      <div className="mt-4 sm:mt-6">
+        <label className="form-label text-xs sm:text-sm" htmlFor="totalInWords">Total (in words):</label>
         <input
-          className="form-input"
+          className="form-input text-xs sm:text-sm"
           id="totalInWords"
           type="text"
           value={totalInWords}

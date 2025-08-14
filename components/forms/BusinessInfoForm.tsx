@@ -12,8 +12,8 @@ export default function BusinessInfoForm() {
   return (
     <div className="notion-style">
       <h2 className="notion-header">Business Information</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        <div className="sm:col-span-2 lg:col-span-1">
           <label className="form-label" htmlFor="companyName">Company Name</label>
           <input
             className="form-input"
@@ -24,7 +24,7 @@ export default function BusinessInfoForm() {
             placeholder="SHREE GANPATI SANITARY"
           />
         </div>
-        <div>
+        <div className="sm:col-span-2 lg:col-span-1">
           <label className="form-label" htmlFor="gstin">GSTIN/UIN</label>
           <input
             className="form-input"

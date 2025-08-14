@@ -9,7 +9,7 @@ export default function ClientInfoForm() {
   return (
     <div className="notion-style">
       <h2 className="notion-header">Client Information</h2>
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <div>
           <label className="form-label" htmlFor="clientName">Name:</label>
           <input
@@ -58,7 +58,7 @@ export default function ClientInfoForm() {
           />
         </div>
 
-        <div>
+        <div className="sm:col-span-2">
           <label className="form-label" htmlFor="clientAddress">Address:</label>
           <textarea
             className="form-input"
@@ -70,7 +70,7 @@ export default function ClientInfoForm() {
           />
         </div>
 
-        <div>
+        <div className="sm:col-span-2">
           <label className="form-label" htmlFor="clientGstin">GSTIN:</label>
           <input
             className="form-input"
