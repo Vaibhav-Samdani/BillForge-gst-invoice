@@ -39,9 +39,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-
-VERDICT.md
-STRUCTURE.md
-migrate.sh
-ANALYSIS.md

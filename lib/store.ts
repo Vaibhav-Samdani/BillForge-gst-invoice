@@ -57,7 +57,6 @@ export interface InvoiceState {
   setInvoiceNumber: (number: string) => void;
   setInvoiceDate: (date: string) => void;
   addItem: () => void;
-  addItemWithData: (itemData: Omit<LineItem, 'id'>) => void;
   updateItem: (id: string, item: Partial<LineItem>) => void;
   removeItem: (id: string) => void;
   setSameGst: (same: boolean) => void;
@@ -113,7 +112,7 @@ const DEFAULT_TOTALS: InvoiceTotals = {
 
 const useInvoiceStore = create<InvoiceState>()(
   persist(
-    (set) => {
+    (set, get) => {
       // Initial state
       const initialState = {
         business: {
@@ -193,18 +192,6 @@ const useInvoiceStore = create<InvoiceState>()(
               per: "NOS",
               gst: state.sameGst ? state.globalGst : 0,
               amount: 0,
-            };
-
-            const newItems = [...state.items, newItem];
-            const newState = { ...state, items: newItems };
-            return { ...newState, totals: calculateTotals(newState) };
-          }),
-
-        addItemWithData: (itemData) =>
-          set((state) => {
-            const newItem = {
-              ...itemData,
-              id: Date.now().toString(),
             };
 
             const newItems = [...state.items, newItem];
