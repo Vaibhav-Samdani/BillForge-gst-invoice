@@ -1,11 +1,12 @@
-"use client";
 import React from "react";
 import Header from "@/components/layout/Header";
 import BusinessInfoForm from "@/components/forms/BusinessInfoForm";
 import ClientInfoForm from "@/components/forms/ClientInfoForm";
 import LineItemsTable from "@/components/forms/LineItemsTable";
 import InvoiceSummary from "@/components/forms/InvoiceSummary";
-import InvoicePreviewPanel from "@/components/invoice/InvoicePreviewPanel";
+import dynamic from 'next/dynamic';
+
+const InvoicePreviewPanel = dynamic(() => import('@/components/invoice/InvoicePreviewPanel'), { ssr: false });
 
 const page = () => {
   return (

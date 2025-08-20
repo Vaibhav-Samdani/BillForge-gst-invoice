@@ -1,5 +1,3 @@
-"use client";
-
 import useInvoiceStore, { useSafeInvoiceTotals } from "@/lib/store";
 import { InvoiceDoc } from "../Templates/Invoice";
 import { formatDate } from "@/lib/utils";

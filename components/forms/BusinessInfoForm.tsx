@@ -22,6 +22,7 @@ export default function BusinessInfoForm() {
             value={business.name}
             onChange={(e) => setBusiness({ name: e.target.value })}
             placeholder="SHREE GANPATI SANITARY"
+            required
           />
         </div>
         <div className="sm:col-span-2 lg:col-span-1">
@@ -34,6 +35,7 @@ export default function BusinessInfoForm() {
             onChange={(e) => setBusiness({ gstin: e.target.value })}
             maxLength={15}
             placeholder="08CGPPB7908K1Z5"
+            required
           />
         </div>
         <div className="md:col-span-2">
@@ -45,6 +47,7 @@ export default function BusinessInfoForm() {
             value={business.address}
             onChange={(e) => setBusiness({ address: e.target.value })}
             placeholder="Nayi Aabadi Nagri, Raipur Road, Nimbi, Teh. Raipur, Bhilwara, Rajasthan, 311803"
+            required
           />
         </div>
         <div>
@@ -78,6 +81,7 @@ export default function BusinessInfoForm() {
             value={invoiceNumber}
             onChange={(e) => setInvoiceNumber(e.target.value)}
             placeholder="183"
+            required
           />
         </div>
         <div>
@@ -89,6 +93,7 @@ export default function BusinessInfoForm() {
               type="date"
               value={invoiceDate}
               onChange={(e) => setInvoiceDate(e.target.value)}
+              required
             />
             <span className="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">calendar_today</span>
           </div>

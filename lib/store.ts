@@ -58,7 +58,7 @@ export interface InvoiceState {
   setInvoiceDate: (date: string) => void;
   addItem: () => void;
   addItemWithData: (itemData: Omit<LineItem, 'id'>) => void;
-  updateItem: (id: string, item: Partial<LineItem>) => void;
+  updateItem: (id: string, item: Partial<Omit<LineItem, 'id' | 'amount'>>) => void;
   removeItem: (id: string) => void;
   setSameGst: (same: boolean) => void;
   setGlobalGst: (gst: number) => void;
@@ -80,25 +80,20 @@ const calculateTotals = (state: InvoiceData): InvoiceTotals => {
   const subtotal = state.items.reduce((sum, item) => sum + item.amount, 0);
 
   // GST Calculation
-  // Check if stateCode exists before comparing
-  let cgst = 0,
-    sgst = 0;
-    const igst = 0;
+  let cgst = 0;
+  let sgst = 0;
 
   state.items.forEach((item) => {
     const gstAmount = (item.amount * item.gst) / 100;
     cgst += gstAmount / 2;
     sgst += gstAmount / 2;
-
   });
 
-  // let total = subtotal + cgst + sgst + igst;
-  let total = subtotal + cgst + sgst ;
+  let total = subtotal + cgst + sgst;
   const round_off = Math.round(total) - total;
-  total = Math.round(total); 
+  total = Math.round(total);
 
-  return { subtotal, cgst, sgst, igst, round_off, total };
-  // return { subtotal, cgst, sgst,  round_off, total };
+  return { subtotal, cgst, sgst, igst: 0, round_off, total };
 };
 
 // Create default totals object
@@ -212,18 +207,16 @@ const useInvoiceStore = create<InvoiceState>()(
             return { ...newState, totals: calculateTotals(newState) };
           }),
 
-        updateItem: (id, item) =>
+        updateItem: (id, itemUpdate) =>
           set((state) => {
             const newItems = state.items.map((i) => {
               if (i.id === id) {
-                const quantity =
-                  item.quantity !== undefined ? item.quantity : i.quantity;
-                const rate = item.rate !== undefined ? item.rate : i.rate;
-                return {
-                  ...i,
-                  ...item,
-                  amount: quantity * rate,
-                };
+                const updatedItem = { ...i, ...itemUpdate };
+                const quantity = updatedItem.quantity;
+                const rate = updatedItem.rate;
+                const amount = quantity * rate;
+                const gst = state.sameGst ? state.globalGst : updatedItem.gst;
+                return { ...updatedItem, amount, gst };
               }
               return i;
             });
@@ -240,14 +233,10 @@ const useInvoiceStore = create<InvoiceState>()(
 
         setSameGst: (same) =>
           set((state) => {
-            // If switching to same GST, apply global GST to all items
-            let newItems = state.items;
-            if (same) {
-              newItems = state.items.map((item) => ({
-                ...item,
-                gst: state.globalGst,
-              }));
-            }
+            const newItems = state.items.map((item) => ({
+              ...item,
+              gst: same ? state.globalGst : item.gst, // Reset to its own GST if sameGst is turned off
+            }));
 
             const newState = { ...state, sameGst: same, items: newItems };
             return { ...newState, totals: calculateTotals(newState) };
@@ -255,14 +244,10 @@ const useInvoiceStore = create<InvoiceState>()(
 
         setGlobalGst: (gst) =>
           set((state) => {
-            // If same GST is enabled, apply to all items
-            let newItems = state.items;
-            if (state.sameGst) {
-              newItems = state.items.map((item) => ({
-                ...item,
-                gst,
-              }));
-            }
+            const newItems = state.items.map((item) => ({
+              ...item,
+              gst: state.sameGst ? gst : item.gst,
+            }));
 
             const newState = { ...state, globalGst: gst, items: newItems };
             return { ...newState, totals: calculateTotals(newState) };
@@ -280,12 +265,6 @@ const useInvoiceStore = create<InvoiceState>()(
         sameGst: state.sameGst,
         globalGst: state.globalGst,
       }),
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          // Recalculate totals after rehydration
-          state.totals = calculateTotals(state);
-        }
-      },
     }
   )
 );
