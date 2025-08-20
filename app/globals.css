@@ -1,33 +1,31 @@
 @import "tailwindcss";
 
-/* Color palette inspired by Notion */
+/* Color palette inspired by Notion - Light mode only */
 :root {
   --background: #f7f6f3;
   --foreground: #232629;
   --muted: #e3e2df;
+  --muted-foreground: #6b7280;
   --border: #e0e0e0;
+  --input: #ffffff;
   --primary: #2f76da;
+  --primary-foreground: #ffffff;
   --secondary: #f5c518;
+  --secondary-foreground: #232629;
   --accent: #eab308;
+  --accent-foreground: #232629;
   --danger: #e45735;
   --success: #4bb543;
+  --popover: #ffffff;
+  --popover-foreground: #232629;
+  --card: #ffffff;
+  --card-foreground: #232629;
+  --ring: #2f76da;
   /* --font-sans: 'Inter', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'Fira Mono', 'Menlo', monospace; */
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --background: #181a1b;
-    --foreground: #f7f6f3;
-    --muted: #232629;
-    --border: #232629;
-    --primary: #539bf5;
-    --secondary: #ffe066;
-    --accent: #facc15;
-    --danger: #ff6b6b;
-    --success: #51fa7b;
-  }
-}
+
 
 body {
   background: var(--background);
@@ -89,4 +87,11 @@ button:hover, input:focus, select:focus, textarea:focus {
 ::selection {
   background: var(--primary);
   color: #fff;
+}
+
+/* Ensure select dropdown is visible with solid background */
+[data-radix-select-content] {
+  background: #ffffff !important;
+  border: 1px solid #e0e0e0 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
 }

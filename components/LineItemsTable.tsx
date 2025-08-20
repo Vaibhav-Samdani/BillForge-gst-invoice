@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import useInvoiceStore from "@/lib/store";
 import { Label } from "@/components/ui/label";
+import CurrencyDisplay from "@/components/CurrencyDisplay";
 
 export default function LineItemsTable() {
   const items = useInvoiceStore((state) => state.items);
@@ -22,6 +23,7 @@ export default function LineItemsTable() {
   // const setSameGst = useInvoiceStore((state) => state.setSameGst);
   const globalGst = useInvoiceStore((state) => state.globalGst);
   const setGlobalGst = useInvoiceStore((state) => state.setGlobalGst);
+  const selectedCurrency = useInvoiceStore((state) => state.selectedCurrency);
 
   return (
     <div className="overflow-hidden border rounded-lg">
@@ -59,10 +61,10 @@ export default function LineItemsTable() {
             <TableHead className="w-[200px]">Description</TableHead>
             <TableHead className="w-[100px]">HSN/SAC</TableHead>
             <TableHead className="w-[80px]">Qty</TableHead>
-            <TableHead className="w-[100px]">Rate (₹)</TableHead>
+            <TableHead className="w-[100px]">Rate ({selectedCurrency.symbol})</TableHead>
             <TableHead className="w-[80px]">Per</TableHead>
             {!sameGst && <TableHead className="w-[100px]">GST (%)</TableHead>}
-            <TableHead className="w-[120px]">Amount (₹)</TableHead>
+            <TableHead className="w-[120px]">Amount ({selectedCurrency.symbol})</TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -137,11 +139,11 @@ export default function LineItemsTable() {
                 </TableCell>
               )}
               <TableCell className="font-medium">
-                {new Intl.NumberFormat("en-IN", {
-                  style: "currency",
-                  currency: "INR",
-                  maximumFractionDigits: 2,
-                }).format(item.amount)}
+                <CurrencyDisplay 
+                  amount={item.amount} 
+                  currency={selectedCurrency}
+                  size="sm"
+                />
               </TableCell>
               <TableCell>
                 <Button

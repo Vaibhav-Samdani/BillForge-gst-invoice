@@ -1,8 +1,13 @@
 "use client";
+import { useState, useEffect } from "react";
 import useInvoiceStore from "@/lib/store";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import CurrencySelector from "@/components/CurrencySelector";
+import ExchangeRateDisplay from "@/components/ExchangeRateDisplay";
+import { currencyService } from "@/lib/services/CurrencyService";
+import { ExchangeRate } from "@/lib/types";
 
 export default function BusinessInfoForm() {
   const business = useInvoiceStore((state) => state.business);
@@ -11,6 +16,69 @@ export default function BusinessInfoForm() {
   const setInvoiceNumber = useInvoiceStore((state) => state.setInvoiceNumber);
   const invoiceDate = useInvoiceStore((state) => state.invoiceDate);
   const setInvoiceDate = useInvoiceStore((state) => state.setInvoiceDate);
+  
+  // Currency-related state
+  const selectedCurrency = useInvoiceStore((state) => state.selectedCurrency);
+  const setCurrency = useInvoiceStore((state) => state.setCurrency);
+  const supportedCurrencies = useInvoiceStore((state) => state.supportedCurrencies);
+  const exchangeRates = useInvoiceStore((state) => state.exchangeRates);
+  const updateExchangeRates = useInvoiceStore((state) => state.updateExchangeRates);
+  
+  const [currentExchangeRate, setCurrentExchangeRate] = useState<ExchangeRate | undefined>();
+  const [exchangeRateError, setExchangeRateError] = useState<string>("");
+  const [isLoadingRates, setIsLoadingRates] = useState(false);
+
+  // Load exchange rates when currency changes
+  useEffect(() => {
+    if (selectedCurrency.code !== "USD") {
+      loadExchangeRates();
+    } else {
+      setCurrentExchangeRate(undefined);
+    }
+  }, [selectedCurrency.code]);
+
+  const loadExchangeRates = async () => {
+    if (selectedCurrency.code === "USD") return;
+    
+    setIsLoadingRates(true);
+    setExchangeRateError("");
+    
+    try {
+      const rate = await currencyService.getExchangeRate("USD", selectedCurrency.code);
+      if (rate) {
+        setCurrentExchangeRate(rate);
+        // Update the store with all rates for this base currency
+        const allRates = await currencyService.getExchangeRates("USD");
+        updateExchangeRates(allRates);
+      } else {
+        setExchangeRateError("Exchange rate not available for this currency");
+      }
+    } catch (error) {
+      setExchangeRateError(
+        error instanceof Error ? error.message : "Failed to load exchange rates"
+      );
+    } finally {
+      setIsLoadingRates(false);
+    }
+  };
+
+  const handleRefreshRates = async () => {
+    if (selectedCurrency.code === "USD") return;
+    
+    try {
+      const rate = await currencyService.getExchangeRate("USD", selectedCurrency.code);
+      if (rate) {
+        setCurrentExchangeRate(rate);
+        const allRates = await currencyService.getExchangeRates("USD", true); // Force refresh
+        updateExchangeRates(allRates);
+        setExchangeRateError("");
+      }
+    } catch (error) {
+      setExchangeRateError(
+        error instanceof Error ? error.message : "Failed to refresh exchange rates"
+      );
+    }
+  };
 
   return (
     <Card className="flex-1">
@@ -89,6 +157,27 @@ export default function BusinessInfoForm() {
             onChange={(e) => setInvoiceDate(e.target.value)}
           />
         </div>
+
+        <div className="space-y-2 md:col-span-2">
+          <CurrencySelector
+            selectedCurrency={selectedCurrency}
+            onCurrencyChange={setCurrency}
+            supportedCurrencies={supportedCurrencies}
+            showExchangeRate={true}
+            exchangeRate={currentExchangeRate?.rate}
+          />
+        </div>
+
+        {selectedCurrency.code !== "USD" && (
+          <div className="md:col-span-2">
+            <ExchangeRateDisplay
+              exchangeRate={currentExchangeRate}
+              onRefresh={handleRefreshRates}
+              isLoading={isLoadingRates}
+              error={exchangeRateError}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Client Users table for client portal authentication
+model ClientUser {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  passwordHash        String    @map("password_hash")
+  name                String
+  company             String?
+  isVerified          Boolean   @default(false) @map("is_verified")
+  verificationToken   String?   @map("verification_token")
+  resetToken          String?   @map("reset_token")
+  resetTokenExpiry    DateTime? @map("reset_token_expiry")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  lastLoginAt         DateTime? @map("last_login_at")
+
+  // Relations
+  invoices            Invoice[]
+  payments            Payment[]
+
+  @@map("client_users")
+}
+
+// Enhanced Invoices table with currency and recurring support
+model Invoice {
+  id                  String    @id @default(cuid())
+  invoiceNumber       String    @unique @map("invoice_number")
+  clientId            String    @map("client_id")
+  businessData        Json      @map("business_data")
+  clientData          Json      @map("client_data")
+  lineItems           Json      @map("line_items")
+  currencyCode        String    @map("currency_code")
+  exchangeRate        Float?    @map("exchange_rate")
+  subtotal            Float
+  taxAmount           Float     @map("tax_amount")
+  totalAmount         Float     @map("total_amount")
+  status              String    @default("draft")
+  paymentStatus       String    @default("unpaid") @map("payment_status")
+  isRecurring         Boolean   @default(false) @map("is_recurring")
+  recurringConfig     Json?     @map("recurring_config")
+  parentInvoiceId     String?   @map("parent_invoice_id")
+  invoiceDate         DateTime  @map("invoice_date")
+  dueDate             DateTime  @map("due_date")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  paidAt              DateTime? @map("paid_at")
+
+  // Relations
+  client              ClientUser @relation(fields: [clientId], references: [id])
+  parentInvoice       Invoice?   @relation("RecurringInvoices", fields: [parentInvoiceId], references: [id])
+  childInvoices       Invoice[]  @relation("RecurringInvoices")
+  payments            Payment[]
+
+  @@map("invoices")
+}
+
+// Payments table for tracking client payments
+model Payment {
+  id              String    @id @default(cuid())
+  invoiceId       String    @map("invoice_id")
+  clientId        String    @map("client_id")
+  amount          Float
+  currencyCode    String    @map("currency_code")
+  paymentMethod   String    @map("payment_method")
+  transactionId   String    @map("transaction_id")
+  status          String    @default("pending")
+  processedAt     DateTime  @default(now()) @map("processed_at")
+  refundedAt      DateTime? @map("refunded_at")
+  refundAmount    Float?    @map("refund_amount")
+
+  // Relations
+  invoice         Invoice    @relation(fields: [invoiceId], references: [id])
+  client          ClientUser @relation(fields: [clientId], references: [id])
+
+  @@map("payments")
+}
+
+// Exchange Rates table for currency conversion
+model ExchangeRate {
+  id              String   @id @default(cuid())
+  baseCurrency    String   @map("base_currency")
+  targetCurrency  String   @map("target_currency")
+  rate            Float
+  source          String
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@unique([baseCurrency, targetCurrency, createdAt])
+  @@map("exchange_rates")
+}

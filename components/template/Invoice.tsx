@@ -5,6 +5,7 @@ import { styles } from "./style2";
 import { Table, TD, TH, TR } from "@ag-media/react-pdf-table";
 import { BusinessInfo, ClientInfo, InvoiceTotals, LineItem } from "@/lib/store";
 import { formatCurrency, numberToWords } from "@/lib/utils";
+import { Currency, DEFAULT_CURRENCY } from "@/lib/types/invoice";
 
 export const InvoiceDoc = ({
   business,
@@ -13,6 +14,7 @@ export const InvoiceDoc = ({
   invoiceNumber,
   invoiceDate,
   totals,
+  currency = DEFAULT_CURRENCY,
 }: {
   business: BusinessInfo;
   client: ClientInfo;
@@ -20,6 +22,7 @@ export const InvoiceDoc = ({
   invoiceNumber: string;
   invoiceDate: string;
   totals: InvoiceTotals;
+  currency?: Currency;
 }) => (
   <Document>
     <Page size="A4">
@@ -77,7 +80,7 @@ export const InvoiceDoc = ({
             <TD style={[styles.quantity, styles.td]}>{item.quantity}</TD>
             <TD style={[styles.auto, styles.td]}>{item.rate}</TD>
             <TD style={[styles.td, styles.amount]}>
-              {formatCurrency(item.amount)}
+              {formatCurrency(item.amount, currency.code)}
             </TD>
           </TR>
         ))}
@@ -94,7 +97,7 @@ export const InvoiceDoc = ({
           <TD style={styles.noBorder} />
           <TD style={[styles.firstColumn, styles.noBorder]}>Subtotal : </TD>
           <TD style={[styles.lastColumn, styles.noBorder, styles.amount]}>
-            {formatCurrency(totals.subtotal)}
+            {formatCurrency(totals.subtotal, currency.code)}
           </TD>
         </TR>
         <TR
@@ -109,7 +112,7 @@ export const InvoiceDoc = ({
           <TD style={styles.noBorder} />
           <TD style={[styles.firstColumn, styles.noBorder]}>CGST @ 9% : </TD>
           <TD style={[styles.lastColumn, styles.noBorder, styles.amount]}>
-            {formatCurrency(totals.cgst)}
+            {formatCurrency(totals.cgst, currency.code)}
           </TD>
         </TR>
         <TR
@@ -124,7 +127,7 @@ export const InvoiceDoc = ({
           <TD style={styles.noBorder} />
           <TD style={[styles.firstColumn, styles.noBorder]}>SGST @ 9% : </TD>
           <TD style={[styles.lastColumn, styles.noBorder, styles.amount]}>
-            {formatCurrency(totals.sgst)}
+            {formatCurrency(totals.sgst, currency.code)}
           </TD>
         </TR>
         <TR
@@ -139,7 +142,7 @@ export const InvoiceDoc = ({
           <TD style={styles.noBorder} />
           <TD style={[styles.firstColumn, styles.noBorder]}>Round Off A/c :</TD>
           <TD style={[styles.lastColumn, styles.noBorder, styles.amount]}>
-            {formatCurrency(totals.round_off)}
+            {formatCurrency(totals.round_off, currency.code)}
           </TD>
         </TR>
         <TR
@@ -158,7 +161,7 @@ export const InvoiceDoc = ({
           <TD style={styles.noBorder} />
           <TD style={[styles.firstColumn, styles.noBorder]}>Net Total : </TD>
           <TD style={[styles.lastColumn, styles.noBorder, styles.amount]}>
-            {formatCurrency(totals.total)}
+            {formatCurrency(totals.total, currency.code)}
           </TD>
         </TR>
       </Table>
@@ -178,7 +181,7 @@ export const InvoiceDoc = ({
                 },
               ]}
             >
-              INR {numberToWords(totals.total)}
+              {numberToWords(totals.total, currency.code)}
             </Text>
           </View>
         </View>

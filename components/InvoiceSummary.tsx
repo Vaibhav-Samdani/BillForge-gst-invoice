@@ -1,24 +1,15 @@
 "use client";
 
-import { useSafeInvoiceTotals } from "@/lib/store";
+import useInvoiceStore, { useSafeInvoiceTotals } from "@/lib/store";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useMemo } from "react";
-import { formatCurrency, numberToWords } from "@/lib/utils";
+import { numberToWords } from "@/lib/utils";
+import CurrencyDisplay from "@/components/CurrencyDisplay";
 
 export default function InvoiceSummary() {
   const totals = useSafeInvoiceTotals();
+  const selectedCurrency = useInvoiceStore((state) => state.selectedCurrency);
 
-  // Memoize formatted values
-  const formattedValues = useMemo(
-    () => ({
-      subtotal: formatCurrency(totals.subtotal),
-      cgst: formatCurrency(totals.cgst),
-      sgst: formatCurrency(totals.sgst),
-      igst: formatCurrency(totals.igst),
-      total: formatCurrency(totals.total),
-    }),
-    [totals]
-  );
+
 
   return (
     <Card>
@@ -29,39 +20,64 @@ export default function InvoiceSummary() {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="font-medium">Subtotal:</span>
-            <span>{formattedValues.subtotal}</span>
+            <CurrencyDisplay 
+              amount={totals.subtotal} 
+              currency={selectedCurrency}
+              size="sm"
+            />
           </div>
 
           {totals.igst > 0 ? (
             <div className="flex justify-between">
               <span className="font-medium">IGST:</span>
-              <span>{formattedValues.igst}</span>
+              <CurrencyDisplay 
+                amount={totals.igst} 
+                currency={selectedCurrency}
+                size="sm"
+              />
             </div>
           ) : (
             <>
               <div className="flex justify-between">
                 <span className="font-medium">CGST:</span>
-                <span>{formattedValues.cgst}</span>
+                <CurrencyDisplay 
+                  amount={totals.cgst} 
+                  currency={selectedCurrency}
+                  size="sm"
+                />
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">SGST:</span>
-                <span>{formattedValues.sgst}</span>
+                <CurrencyDisplay 
+                  amount={totals.sgst} 
+                  currency={selectedCurrency}
+                  size="sm"
+                />
               </div>
             </>
           )}
 
           <div className="flex justify-between">
             <span className="font-medium">Round Off:</span>
-            <span>{formatCurrency(totals.round_off)}</span>
+            <CurrencyDisplay 
+              amount={totals.round_off} 
+              currency={selectedCurrency}
+              size="sm"
+            />
           </div>
 
           <div className="flex justify-between pt-2 border-t">
             <span className="font-bold">Net Total:</span>
-            <span className="font-bold">{formattedValues.total}</span>
+            <CurrencyDisplay 
+              amount={totals.total} 
+              currency={selectedCurrency}
+              size="md"
+              className="font-bold"
+            />
           </div>
           <div className="flex justify-between pt-2 border-t">
             <span className="font-bold">Total (in words):</span>
-            <span className="font-bold">INR {numberToWords(totals.total)}</span>
+            <span className="font-bold">{numberToWords(totals.total, selectedCurrency.code)}</span>
           </div>
         </div>
       </CardContent>

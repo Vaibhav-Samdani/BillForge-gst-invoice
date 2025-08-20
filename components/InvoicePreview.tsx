@@ -12,6 +12,7 @@ export default function InvoicePreview() {
   const items = useInvoiceStore((state) => state.items);
   const invoiceNumber = useInvoiceStore((state) => state.invoiceNumber);
   const invoiceDate = useInvoiceStore((state) => state.invoiceDate);
+  const selectedCurrency = useInvoiceStore((state) => state.selectedCurrency);
 
   const totals = useSafeInvoiceTotals();
 
@@ -35,6 +36,7 @@ export default function InvoicePreview() {
               invoiceNumber={invoiceNumber}
               invoiceDate={formatDate(invoiceDate)}
               totals={totals}
+              currency={selectedCurrency}
             />
           }
           fileName={`invoice-${invoiceNumber}-${client.name}.pdf`}
@@ -53,6 +55,7 @@ export default function InvoicePreview() {
           invoiceNumber={invoiceNumber}
           invoiceDate={formatDate(invoiceDate)}
           totals={totals}
+          currency={selectedCurrency}
         />
       </PDFViewer>
     </div>
