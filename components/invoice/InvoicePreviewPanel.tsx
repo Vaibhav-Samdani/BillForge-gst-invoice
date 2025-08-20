@@ -1,7 +1,76 @@
 "use client";
+import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import useInvoiceStore from "@/lib/store";
+import { InvoiceDoc } from "./Templates/Invoice";
+import { ModernInvoiceTemplate } from "./Templates/ModernTemplate";
+import { MinimalistInvoiceTemplate } from "./Templates/MinimalistTemplate";
+import { CreativeInvoiceTemplate } from "./Templates/CreativeTemplate";
+import { usePDF } from '@react-pdf/renderer';
+import { toast } from 'sonner';
+
+const PDFViewerWrapper = dynamic(() => import('@/components/pdf/PDFViewerWrapper'), {
+  ssr: false,
+});
+
+const TEMPLATES = [
+  {
+    id: "classic",
+    name: "Classic",
+    description: "Traditional invoice design",
+    component: InvoiceDoc,
+  },
+  {
+    id: "modern",
+    name: "Modern",
+    description: "Clean and professional",
+    component: ModernInvoiceTemplate,
+  },
+  {
+    id: "minimalist",
+    name: "Minimalist",
+    description: "Simple and elegant",
+    component: MinimalistInvoiceTemplate,
+  },
+  {
+    id: "creative",
+    name: "Creative",
+    description: "Colorful and engaging",
+    component: CreativeInvoiceTemplate,
+  },
+];
+
+interface DownloadButtonProps {
+  doc: React.ReactElement;
+  fileName: string;
+  children: ({ loading, onClick }: { loading: boolean; onClick: () => void; }) => React.ReactNode;
+}
+
+const DownloadButton = ({ doc, fileName, children }: DownloadButtonProps) => {
+  const [instance] = usePDF({ document: doc });
+
+  const handleClick = () => {
+    if (instance.loading) return;
+    if (instance.error) {
+      toast.error('Failed to generate PDF. Please try again.');
+      console.error(instance.error);
+      return;
+    }
+    if (instance.url) {
+      const link = document.createElement('a');
+      link.href = instance.url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  return children({ loading: instance.loading, onClick: handleClick });
+};
 
 export default function InvoicePreviewPanel() {
+  const [selectedTemplate, setSelectedTemplate] = useState("classic");
   const business = useInvoiceStore((state) => state.business);
   const client = useInvoiceStore((state) => state.client);
   const items = useInvoiceStore((state) => state.items);
@@ -9,15 +78,60 @@ export default function InvoicePreviewPanel() {
   const invoiceDate = useInvoiceStore((state) => state.invoiceDate);
   const totals = useInvoiceStore((state) => state.totals);
 
+  const selectedTemplateData = TEMPLATES.find(t => t.id === selectedTemplate);
+  const TemplateComponent = selectedTemplateData?.component || InvoiceDoc;
+
+  const invoiceProps = {
+    business,
+    client,
+    items,
+    invoiceNumber,
+    invoiceDate,
+    totals,
+  };
+
   return (
-    <div className="sticky top-10 h-screen">
+    <div className="xl:sticky top-10 h-full">
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm h-full flex flex-col">
+        {/* Template Selector */}
         <div className="p-4 border-b border-gray-200">
-          <button className="btn btn-primary w-full">
-            <span className="material-icons mr-2 text-sm">download</span>
-            Download now!
-          </button>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Choose Template</h3>
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {TEMPLATES.map((template) => (
+              <button
+                key={template.id}
+                onClick={() => setSelectedTemplate(template.id)}
+                className={`p-3 text-left rounded-lg border-2 transition-all ${
+                  selectedTemplate === template.id
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="font-medium text-sm">{template.name}</div>
+                <div className="text-xs text-gray-500">{template.description}</div>
+              </button>
+            ))}
+          </div>
+          
+          {/* Download Button */}
+          <DownloadButton
+            doc={<TemplateComponent {...invoiceProps} />}
+            fileName={`invoice-${invoiceNumber || "draft"}-${selectedTemplate}.pdf`}
+          >
+            {({ loading, onClick }: { loading: boolean, onClick: () => void }) => (
+              <button 
+                className="btn btn-primary w-full"
+                disabled={loading}
+                onClick={onClick}
+              >
+                <span className="material-icons mr-2 text-sm">download</span>
+                {loading ? "Generating..." : `Download ${selectedTemplateData?.name} Template`}
+              </button>
+            )}
+          </DownloadButton>
         </div>
+
+        {/* Preview Area */}
         <div className="p-4 bg-gray-100 flex-grow overflow-y-auto">
           <div className="bg-gray-700 p-4 rounded-t-lg flex items-center justify-between text-white">
             <div className="flex items-center space-x-2">
@@ -37,9 +151,16 @@ export default function InvoicePreviewPanel() {
                 <span className="material-icons">add</span>
               </button>
               <div className="w-px h-5 bg-gray-500"></div>
-              <button className="text-white">
-                <span className="material-icons">download</span>
-              </button>
+              <DownloadButton
+                doc={<TemplateComponent {...invoiceProps} />}
+                fileName={`invoice-${invoiceNumber || "draft"}-${selectedTemplate}.pdf`}
+              >
+                {({ loading, onClick }: { loading: boolean, onClick: () => void }) => (
+                  <button className="text-white" onClick={onClick}>
+                    <span className="material-icons">download</span>
+                  </button>
+                )}
+              </DownloadButton>
               <button className="text-white">
                 <span className="material-icons">print</span>
               </button>
@@ -48,89 +169,10 @@ export default function InvoicePreviewPanel() {
               </button>
             </div>
           </div>
-          <div className="bg-white p-6 shadow-lg">
-            {/* Invoice Preview Content */}
-            <div className="mb-6">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-800">{business.name || "Your Company"}</h1>
-                  <p className="text-sm text-gray-600 mt-1">{business.address}</p>
-                  <p className="text-sm text-gray-600">GSTIN: {business.gstin}</p>
-                  <p className="text-sm text-gray-600">Email: {business.email}</p>
-                  <p className="text-sm text-gray-600">Phone: {business.phone}</p>
-                </div>
-                <div className="text-right">
-                  <h2 className="text-xl font-bold text-gray-800">INVOICE</h2>
-                  <p className="text-sm text-gray-600">Invoice #: {invoiceNumber || "---"}</p>
-                  <p className="text-sm text-gray-600">Date: {invoiceDate || "---"}</p>
-                </div>
-              </div>
-
-              <div className="border-t border-b border-gray-200 py-4 mb-6">
-                <h3 className="font-semibold text-gray-800 mb-2">Bill To:</h3>
-                <p className="text-sm font-medium">{client.name || "Client Name"}</p>
-                <p className="text-sm text-gray-600">{client.company}</p>
-                <p className="text-sm text-gray-600">{client.address}</p>
-                <p className="text-sm text-gray-600">GSTIN: {client.gstin}</p>
-                <p className="text-sm text-gray-600">Phone: {client.phone}</p>
-              </div>
-
-              <div className="mb-6">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-2">Description</th>
-                      <th className="text-center py-2">HSN</th>
-                      <th className="text-center py-2">Qty</th>
-                      <th className="text-right py-2">Rate</th>
-                      <th className="text-right py-2">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item, index) => (
-                      <tr key={item.id} className="border-b border-gray-100">
-                        <td className="py-2">{item.description || `Item ${index + 1}`}</td>
-                        <td className="text-center py-2">{item.hsnSac}</td>
-                        <td className="text-center py-2">{item.quantity} {item.per}</td>
-                        <td className="text-right py-2">₹{item.rate.toFixed(2)}</td>
-                        <td className="text-right py-2">₹{item.amount.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex justify-end">
-                <div className="w-64">
-                  <div className="flex justify-between py-1">
-                    <span className="text-sm">Subtotal:</span>
-                    <span className="text-sm">₹{totals.subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between py-1">
-                    <span className="text-sm">CGST:</span>
-                    <span className="text-sm">₹{totals.cgst.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between py-1">
-                    <span className="text-sm">SGST:</span>
-                    <span className="text-sm">₹{totals.sgst.toFixed(2)}</span>
-                  </div>
-                  {totals.igst > 0 && (
-                    <div className="flex justify-between py-1">
-                      <span className="text-sm">IGST:</span>
-                      <span className="text-sm">₹{totals.igst.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between py-1">
-                    <span className="text-sm">Round Off:</span>
-                    <span className="text-sm">₹{totals.round_off.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-t border-gray-200 font-bold">
-                    <span>Total:</span>
-                    <span>₹{totals.total.toFixed(2)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="bg-white shadow-lg h-full">
+            <PDFViewerWrapper className="w-full h-full">
+              <TemplateComponent {...invoiceProps} />
+            </PDFViewerWrapper>
           </div>
         </div>
       </div>

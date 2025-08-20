@@ -19,6 +19,7 @@ export default function ClientInfoForm() {
             value={client.name}
             onChange={(e) => setClient({ ...client, name: e.target.value })}
             placeholder="Enter client name"
+            required
           />
         </div>
 
@@ -67,6 +68,7 @@ export default function ClientInfoForm() {
             value={client.address}
             onChange={(e) => setClient({ ...client, address: e.target.value })}
             placeholder="Enter client address"
+            required
           />
         </div>
 

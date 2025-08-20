@@ -56,7 +56,6 @@ export default function ItemModal({ isOpen, onClose, item, isEdit = false }: Ite
       updateItem(item.id, {
         ...formData,
         gst: gstToUse,
-        amount,
       });
     } else {
       // For new items, use addItemWithData function
