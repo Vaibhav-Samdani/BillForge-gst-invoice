@@ -5,9 +5,9 @@ import { withSecurity } from '@/lib/middleware/security';
 async function getCsrfTokenHandler(request: NextRequest, context?: any) {
   try {
     // Get client IP or session ID for CSRF token generation
-    const clientIP = request.ip || 
-      request.headers.get('x-forwarded-for')?.split(',')[0] || 
+    const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0] || 
       request.headers.get('x-real-ip') || 
+      request.headers.get('cf-connecting-ip') ||
       'unknown';
     
     const sessionId = request.headers.get('x-session-id') || clientIP;

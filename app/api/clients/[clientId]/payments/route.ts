@@ -52,10 +52,10 @@ const mockPayments: Payment[] = [
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { clientId: string } }
+  { params }: { params: Promise<{ clientId: string }> }
 ) {
   try {
-    const { clientId } = params;
+    const { clientId } = await params;
     const { searchParams } = new URL(request.url);
     
     // Parse query parameters
@@ -137,10 +137,10 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { clientId: string } }
+  { params }: { params: Promise<{ clientId: string }> }
 ) {
   try {
-    const { clientId } = params;
+    const { clientId } = await params;
     const body = await request.json();
 
     // Validate required fields

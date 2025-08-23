@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db/client"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -16,9 +16,11 @@ export async function GET(
       )
     }
 
+    const { id } = await params
+
     const invoice = await prisma.invoice.findFirst({
       where: {
-        id: params.id,
+        id: id,
         clientId: user.id // Ensure client can only access their own invoices
       },
       include: {

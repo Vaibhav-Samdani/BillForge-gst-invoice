@@ -98,9 +98,11 @@ describe('End-to-End User Flows', () => {
               <div>
                 <h2>Business Information</h2>
                 <input
+                  type="text"
                   data-testid="business-name"
                   placeholder="Business Name"
                   onChange={(e) => handleBusinessInfo({ name: e.target.value })}
+                />
                 />
               </div>
             )}

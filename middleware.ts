@@ -20,9 +20,10 @@ export async function middleware(request: NextRequest) {
   })
 
   // Get client IP for rate limiting
-  const clientIP = request.ip || 
-    request.headers.get('x-forwarded-for')?.split(',')[0] || 
+  const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
     request.headers.get('x-real-ip') || 
+    request.headers.get('cf-connecting-ip') || // Cloudflare
+    request.headers.get('x-client-ip') ||
     'unknown'
 
   // Security audit for suspicious requests

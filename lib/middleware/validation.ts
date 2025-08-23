@@ -9,7 +9,7 @@ interface ValidationResult {
 
 // Simple validation functions
 export class SimpleValidator {
-  static validateLogin(data: any): ValidationResult {
+  static validateLogin(data: unknown): ValidationResult {
     const errors: Array<{ field: string; message: string }> = [];
 
     if (!data.email || !InputValidator.isValidEmail(data.email)) {
@@ -23,7 +23,7 @@ export class SimpleValidator {
     return { isValid: errors.length === 0, errors };
   }
 
-  static validateRegister(data: any): ValidationResult {
+  static validateRegister(data: unknown): ValidationResult {
     const errors: Array<{ field: string; message: string }> = [];
 
     if (!data.email || !InputValidator.isValidEmail(data.email)) {
@@ -41,7 +41,7 @@ export class SimpleValidator {
     return { isValid: errors.length === 0, errors };
   }
 
-  static validateInvoice(data: any): ValidationResult {
+  static validateInvoice(data: unknown): ValidationResult {
     const errors: Array<{ field: string; message: string }> = [];
 
     if (!data.invoiceNumber || !InputValidator.validateInvoiceNumber(data.invoiceNumber)) {
@@ -77,7 +77,7 @@ export class SimpleValidator {
     return { isValid: errors.length === 0, errors };
   }
 
-  static validatePayment(data: any): ValidationResult {
+  static validatePayment(data: unknown): ValidationResult {
     const errors: Array<{ field: string; message: string }> = [];
 
     if (!data.invoiceId || typeof data.invoiceId !== 'string') {
@@ -101,7 +101,7 @@ export class SimpleValidator {
     return { isValid: errors.length === 0, errors };
   }
 
-  static validateRecurringInvoice(data: any): ValidationResult {
+  static validateRecurringInvoice(data: unknown): ValidationResult {
     const errors: Array<{ field: string; message: string }> = [];
 
     const validFrequencies = ['weekly', 'monthly', 'quarterly', 'yearly'];
@@ -149,7 +149,7 @@ export class InputSanitizer {
   }
 
   // Sanitize currency amounts
-  static sanitizeCurrencyAmount(amount: any): number {
+  static sanitizeCurrencyAmount(amount: unknown): number {
     const result = InputValidator.validateCurrencyAmount(amount)
     if (!result.valid) {
       throw new Error(result.error || 'Invalid amount')
@@ -163,7 +163,7 @@ export class InputSanitizer {
   }
 
   // Deep sanitize object recursively
-  static sanitizeObject(obj: any): any {
+  static sanitizeObject(obj: unknown): unknown {
     if (typeof obj === 'string') {
       return this.sanitizeString(obj)
     }
@@ -177,7 +177,7 @@ export class InputSanitizer {
     }
 
     if (obj && typeof obj === 'object') {
-      const sanitized: any = {}
+      const sanitized: Record<string, unknown> = {}
       for (const [key, value] of Object.entries(obj)) {
         sanitized[key] = this.sanitizeObject(value)
       }

@@ -66,7 +66,7 @@ const mockInvoices: ClientInvoice[] = [
     amount: 1200.00,
     currency: 'USD',
     status: 'sent',
-    paymentStatus: 'overdue',
+    paymentStatus: 'unpaid',
     invoiceDate: '2025-01-01',
     dueDate: '2025-01-15',
     createdAt: '2025-01-01',

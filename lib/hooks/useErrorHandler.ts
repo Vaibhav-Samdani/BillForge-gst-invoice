@@ -36,7 +36,7 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
     isRetrying: false
   });
 
-  const handleError = useCallback((error: unknown, context?: Record<string, any>) => {
+  const handleError = useCallback((error: unknown, context?: Record<string, unknown>) => {
     const appError = transformError(error);
     
     // Log the error if enabled
@@ -48,7 +48,7 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
     const canRetry = enableRetry && (
       appError instanceof AppError && 
       (appError.statusCode >= 500 || 
-       (appError as any).retryable === true)
+       (appError as AppError & { retryable?: boolean }).retryable === true)
     );
 
     // Get user-friendly message

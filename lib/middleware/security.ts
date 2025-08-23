@@ -23,9 +23,9 @@ interface SecurityConfig {
 // Main security middleware factory
 export function withSecurity(config: SecurityConfig = {}) {
   return function securityMiddleware(
-    handler: (request: NextRequest, context?: any) => Promise<NextResponse>
+    handler: (request: NextRequest, context?: Record<string, unknown>) => Promise<NextResponse>
   ) {
-    return async function securedHandler(request: NextRequest, context?: any): Promise<NextResponse> {
+    return async function securedHandler(request: NextRequest, context?: Record<string, unknown>): Promise<NextResponse> {
       try {
         // Get client IP from headers
         const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -282,9 +282,9 @@ export const publicApiSecurityMiddleware = withSecurity({
 // Security audit middleware
 export function withSecurityAudit() {
   return function auditMiddleware(
-    handler: (request: NextRequest, context?: any) => Promise<NextResponse>
+    handler: (request: NextRequest, context?: Record<string, unknown>) => Promise<NextResponse>
   ) {
-    return async function auditedHandler(request: NextRequest, context?: any): Promise<NextResponse> {
+    return async function auditedHandler(request: NextRequest, context?: Record<string, unknown>): Promise<NextResponse> {
       const startTime = Date.now()
 
       try {
@@ -332,9 +332,9 @@ export function withSecurityAudit() {
 // CORS security middleware
 export function withCORS(allowedOrigins: string[] = []) {
   return function corsMiddleware(
-    handler: (request: NextRequest, context?: any) => Promise<NextResponse>
+    handler: (request: NextRequest, context?: Record<string, unknown>) => Promise<NextResponse>
   ) {
-    return async function corsHandler(request: NextRequest, context?: any): Promise<NextResponse> {
+    return async function corsHandler(request: NextRequest, context?: Record<string, unknown>): Promise<NextResponse> {
       const origin = request.headers.get('origin')
 
       // Handle preflight requests

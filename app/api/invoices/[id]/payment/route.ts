@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const invoiceId = params.id;
+    const { id } = await params;
+    const invoiceId = id;
     const body = await request.json();
     const { paymentIntentId, status, payment } = body;
 
@@ -66,10 +67,11 @@ export async function POST(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const invoiceId = params.id;
+    const { id } = await params;
+    const invoiceId = id;
 
     // TODO: In a real implementation, this would fetch the invoice from the database
     // For now, we'll return a mock invoice

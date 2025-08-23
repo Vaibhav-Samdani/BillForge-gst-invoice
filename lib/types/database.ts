@@ -1,10 +1,10 @@
 import { Prisma } from '../generated/prisma';
 
 // Export Prisma-generated types
-export type ClientUser = Prisma.ClientUserGetPayload<{}>;
-export type Invoice = Prisma.InvoiceGetPayload<{}>;
-export type Payment = Prisma.PaymentGetPayload<{}>;
-export type ExchangeRate = Prisma.ExchangeRateGetPayload<{}>;
+export type ClientUser = Prisma.ClientUserGetPayload<Record<string, never>>;
+export type Invoice = Prisma.InvoiceGetPayload<Record<string, never>>;
+export type Payment = Prisma.PaymentGetPayload<Record<string, never>>;
+export type ExchangeRate = Prisma.ExchangeRateGetPayload<Record<string, never>>;
 
 // Enhanced types with relations
 export type InvoiceWithRelations = Prisma.InvoiceGetPayload<{

@@ -7,10 +7,10 @@ import { PaymentTrackingService, RefundRequest } from '../../../../../lib/servic
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { paymentId: string } }
+  { params }: { params: Promise<{ paymentId: string }> }
 ) {
   try {
-    const { paymentId } = params;
+    const { paymentId } = await params;
     const body = await request.json();
 
     // Validate refund request
@@ -89,10 +89,10 @@ export async function POST(
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { paymentId: string } }
+  { params }: { params: Promise<{ paymentId: string }> }
 ) {
   try {
-    const { paymentId } = params;
+    const { paymentId } = await params;
 
     // Get payment tracking data which includes refund history
     const trackingData = await PaymentTrackingService.getPaymentTrackingData(paymentId);

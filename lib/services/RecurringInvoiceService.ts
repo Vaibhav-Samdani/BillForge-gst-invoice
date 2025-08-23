@@ -1,804 +1,420 @@
-// RecurringInvoiceService - Handles recurring invoice operations and template management
-import { prisma } from '../db';
-import { executeDbOperation, executeTransaction } from '../db/utils';
-import {
-  EnhancedInvoice,
-  RecurringConfig,
-  Currency,
-  ExchangeRate
-} from '../types/invoice';
+import { EnhancedInvoice, RecurringConfig } from '../types/invoice';
 import {
   calculateNextDate,
   generateInvoiceNumber,
-  validateRecurringSchedule,
-  isScheduleDue,
-  getRecurringFrequencies,
-  formatRecurringSchedule,
-  calculateOccurrenceCount,
-  getNextNOccurrences,
-  isRecurringActive,
-  shouldStopRecurring,
   shouldGenerateRecurringInvoice,
-  calculateGeneratedCount,
-  hasReachedMaxOccurrences,
-  updateConfigAfterGeneration,
-  calculateRecurringInvoiceDueDate,
-  generateRecurringInvoiceNumber,
-  getFutureGenerationDates,
-  RecurringSchedule,
-  RecurringFrequency
+  calculateRecurringInvoiceDueDate
 } from '../utils/recurring';
-import { DatabaseResult } from '../types/database';
+import { EmailService } from './EmailService';
 
-// Custom error classes for recurring invoice operations
-export class RecurringInvoiceError extends Error {
-  constructor(message: string, public code: string) {
-    super(message);
-    this.name = 'RecurringInvoiceError';
-  }
+export interface RecurringInvoiceTemplate {
+  id: string;
+  templateName: string;
+  baseInvoice: EnhancedInvoice;
+  recurringConfig: RecurringConfig;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  lastGeneratedAt?: Date;
+  nextGenerationDate: Date;
+  generatedInvoices: string[]; // Array of generated invoice IDs
 }
 
 export class RecurringInvoiceService {
+  private static templates: Map<string, RecurringInvoiceTemplate> = new Map();
+  private static generatedInvoices: Map<string, EnhancedInvoice> = new Map();
+
   /**
    * Create a new recurring invoice template
    */
-  async createRecurringInvoice(
-    invoiceData: Omit<EnhancedInvoice, 'id' | 'createdAt' | 'updatedAt'>,
-    recurringConfig: RecurringConfig
-  ): Promise<DatabaseResult<EnhancedInvoice>> {
-    try {
-      // Validate recurring config
-      const validation = this.validateRecurringConfig(recurringConfig);
-      if (!validation.isValid) {
-        return {
-          success: false,
-          error: `Invalid recurring configuration: ${validation.errors.join(', ')}`
-        };
-      }
+  static async createRecurringTemplate(
+    baseInvoice: EnhancedInvoice,
+    recurringConfig: RecurringConfig,
+    templateName?: string
+  ): Promise<RecurringInvoiceTemplate> {
+    const id = this.generateId();
+    const now = new Date();
 
-      // Create the invoice with recurring configuration
-      const invoice = await prisma.invoice.create({
-        data: {
-          invoiceNumber: invoiceData.invoiceNumber,
-          clientId: invoiceData.clientId,
-          businessData: invoiceData.business as any,
-          clientData: invoiceData.client as any,
-          lineItems: invoiceData.items as any,
-          currencyCode: invoiceData.currency.code,
-          exchangeRate: invoiceData.exchangeRate?.rate,
-          subtotal: invoiceData.totals.subtotal,
-          taxAmount: invoiceData.totals.cgst + invoiceData.totals.sgst + invoiceData.totals.igst,
-          totalAmount: invoiceData.totals.total,
-          status: invoiceData.status,
-          paymentStatus: invoiceData.paymentStatus,
-          isRecurring: true,
-          recurringConfig: recurringConfig as any,
-          parentInvoiceId: invoiceData.parentInvoiceId,
-          invoiceDate: new Date(invoiceData.invoiceDate),
-          dueDate: invoiceData.dueDate,
-        },
-        include: {
-          client: true,
-          childInvoices: true,
-        },
-      });
+    const template: RecurringInvoiceTemplate = {
+      id,
+      templateName: templateName || `Recurring ${baseInvoice.invoiceNumber}`,
+      baseInvoice: { ...baseInvoice },
+      recurringConfig: { ...recurringConfig },
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+      nextGenerationDate: recurringConfig.nextGenerationDate,
+      generatedInvoices: [],
+    };
 
-      return {
-        success: true,
-        data: this.mapPrismaToEnhancedInvoice(invoice)
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'An unexpected error occurred'
-      };
-    }
+    this.templates.set(id, template);
+    return template;
   }
 
   /**
    * Get all recurring invoice templates
    */
-  async getRecurringInvoices(clientId?: string): Promise<DatabaseResult<EnhancedInvoice[]>> {
-    return executeDbOperation(async () => {
-      const invoices = await prisma.invoice.findMany({
-        where: {
-          isRecurring: true,
-          parentInvoiceId: null, // Only get templates, not generated invoices
-          ...(clientId && { clientId }),
-        },
-        include: {
-          client: true,
-          childInvoices: {
-            orderBy: { createdAt: 'desc' },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-      });
-
-      return invoices.map(invoice => this.mapPrismaToEnhancedInvoice(invoice));
-    });
+  static getAllTemplates(): RecurringInvoiceTemplate[] {
+    return Array.from(this.templates.values());
   }
 
   /**
-   * Get a specific recurring invoice template by ID
+   * Get active recurring invoice templates
    */
-  async getRecurringInvoiceById(id: string): Promise<DatabaseResult<EnhancedInvoice | null>> {
-    return executeDbOperation(async () => {
-      const invoice = await prisma.invoice.findFirst({
-        where: {
-          id,
-          isRecurring: true,
-          parentInvoiceId: null,
-        },
-        include: {
-          client: true,
-          childInvoices: {
-            orderBy: { createdAt: 'desc' },
-          },
-        },
-      });
-
-      return invoice ? this.mapPrismaToEnhancedInvoice(invoice) : null;
-    });
+  static getActiveTemplates(): RecurringInvoiceTemplate[] {
+    return Array.from(this.templates.values()).filter(template => template.isActive);
   }
 
   /**
-   * Update a recurring invoice template
+   * Get a specific template by ID
    */
-  async updateRecurringInvoice(
+  static getTemplate(id: string): RecurringInvoiceTemplate | undefined {
+    return this.templates.get(id);
+  }
+
+  /**
+   * Update a recurring template
+   */
+  static async updateTemplate(
     id: string,
-    updates: Partial<EnhancedInvoice>,
-    newRecurringConfig?: RecurringConfig
-  ): Promise<DatabaseResult<EnhancedInvoice>> {
-    return executeDbOperation(async () => {
-      // Validate recurring config if provided
-      if (newRecurringConfig) {
-        const validation = this.validateRecurringConfig(newRecurringConfig);
-        if (!validation.isValid) {
-          throw new RecurringInvoiceError(
-            `Invalid recurring configuration: ${validation.errors.join(', ')}`,
-            'INVALID_RECURRING_CONFIG'
-          );
-        }
-      }
+    updates: Partial<RecurringInvoiceTemplate>
+  ): Promise<RecurringInvoiceTemplate | null> {
+    const template = this.templates.get(id);
+    if (!template) return null;
 
-      const updateData: any = {};
+    const updatedTemplate = {
+      ...template,
+      ...updates,
+      updatedAt: new Date(),
+    };
 
-      // Map updates to Prisma format
-      if (updates.business) updateData.businessData = updates.business;
-      if (updates.client) updateData.clientData = updates.client;
-      if (updates.items) updateData.lineItems = updates.items;
-      if (updates.currency) updateData.currencyCode = updates.currency.code;
-      if (updates.exchangeRate) updateData.exchangeRate = updates.exchangeRate.rate;
-      if (updates.totals) {
-        updateData.subtotal = updates.totals.subtotal;
-        updateData.taxAmount = updates.totals.cgst + updates.totals.sgst + updates.totals.igst;
-        updateData.totalAmount = updates.totals.total;
-      }
-      if (updates.status) updateData.status = updates.status;
-      if (updates.paymentStatus) updateData.paymentStatus = updates.paymentStatus;
-      if (updates.invoiceDate) updateData.invoiceDate = new Date(updates.invoiceDate);
-      if (updates.dueDate) updateData.dueDate = updates.dueDate;
-      if (newRecurringConfig) updateData.recurringConfig = newRecurringConfig as any;
-
-      const invoice = await prisma.invoice.update({
-        where: { id },
-        data: updateData,
-        include: {
-          client: true,
-          childInvoices: {
-            orderBy: { createdAt: 'desc' },
-          },
-        },
-      });
-
-      return this.mapPrismaToEnhancedInvoice(invoice);
-    });
+    this.templates.set(id, updatedTemplate);
+    return updatedTemplate;
   }
 
   /**
-   * Delete a recurring invoice template (and optionally its generated invoices)
+   * Delete a recurring template
    */
-  async deleteRecurringInvoice(
-    id: string,
-    deleteGeneratedInvoices: boolean = false
-  ): Promise<DatabaseResult<boolean>> {
-    return executeTransaction(async (tx) => {
-      if (deleteGeneratedInvoices) {
-        // Delete all generated invoices first
-        await tx.invoice.deleteMany({
-          where: { parentInvoiceId: id },
-        });
-      } else {
-        // Just unlink generated invoices
-        await tx.invoice.updateMany({
-          where: { parentInvoiceId: id },
-          data: { parentInvoiceId: null },
-        });
-      }
-
-      // Delete the template
-      await tx.invoice.delete({
-        where: { id },
-      });
-
-      return true;
-    });
+  static async deleteTemplate(id: string): Promise<boolean> {
+    return this.templates.delete(id);
   }
 
   /**
-   * Get all invoices generated from a recurring template
+   * Toggle active status of a recurring template
    */
-  async getGeneratedInvoices(templateId: string): Promise<DatabaseResult<EnhancedInvoice[]>> {
-    return executeDbOperation(async () => {
-      const invoices = await prisma.invoice.findMany({
-        where: {
-          parentInvoiceId: templateId,
-        },
-        include: {
-          client: true,
-        },
-        orderBy: { createdAt: 'desc' },
-      });
+  static async toggleTemplate(id: string, isActive: boolean): Promise<RecurringInvoiceTemplate | null> {
+    const template = this.templates.get(id);
+    if (!template) return null;
 
-      return invoices.map(invoice => this.mapPrismaToEnhancedInvoice(invoice));
-    });
+    template.isActive = isActive;
+    template.updatedAt = new Date();
+
+    this.templates.set(id, template);
+    return template;
   }
 
   /**
-   * Generate a new invoice from a recurring template
+   * Generate invoice from recurring template
    */
-  async generateRecurringInvoice(templateId: string): Promise<DatabaseResult<EnhancedInvoice>> {
+  static async generateInvoiceFromTemplate(templateId: string): Promise<EnhancedInvoice | null> {
+    const template = this.templates.get(templateId);
+    if (!template || !template.isActive) return null;
+
+    // Check if it's time to generate
+    if (!shouldGenerateRecurringInvoice(template.recurringConfig)) {
+      return null;
+    }
+
+    // Generate new invoice number
+    const sequenceNumber = template.generatedInvoices.length + 1;
+    const newInvoiceNumber = generateInvoiceNumber(template.baseInvoice.invoiceNumber, sequenceNumber);
+
+    // Create new invoice based on template
+    const currentDate = new Date();
+    const newInvoice: EnhancedInvoice = {
+      ...template.baseInvoice,
+      id: this.generateId(),
+      invoiceNumber: newInvoiceNumber,
+      invoiceDate: currentDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD string format
+      dueDate: calculateRecurringInvoiceDueDate(currentDate, 30),
+      status: 'draft',
+      createdAt: currentDate,
+      updatedAt: currentDate,
+      recurringConfig: undefined, // Generated invoices don't have recurring config
+      parentInvoiceId: templateId,
+    };
+
+    // Store the generated invoice
+    this.generatedInvoices.set(newInvoice.id, newInvoice);
+
+    // Update template
+    template.generatedInvoices.push(newInvoice.id);
+    template.lastGeneratedAt = new Date();
+    template.nextGenerationDate = calculateNextDate(
+      template.nextGenerationDate,
+      template.recurringConfig.frequency,
+      template.recurringConfig.interval
+    );
+    template.updatedAt = new Date();
+
+    this.templates.set(templateId, template);
+
+    // Send notification email if configured
     try {
-      const result = await prisma.$transaction(async (tx) => {
-        // Get the template
-        const template = await tx.invoice.findUnique({
-          where: { id: templateId },
-          include: {
-            client: true,
-            childInvoices: true,
-          },
-        });
-
-        if (!template || !template.isRecurring) {
-          throw new RecurringInvoiceError(
-            'Recurring invoice template not found',
-            'TEMPLATE_NOT_FOUND'
-          );
-        }
-
-        const recurringConfig = template.recurringConfig as unknown as RecurringConfig;
-
-        // Convert to RecurringSchedule for validation functions
-        const scheduleConfig: RecurringSchedule = {
-          frequency: recurringConfig.frequency as RecurringFrequency,
-          interval: recurringConfig.interval,
-          startDate: recurringConfig.startDate,
-          endDate: recurringConfig.endDate,
-          maxOccurrences: recurringConfig.maxOccurrences,
-          isActive: recurringConfig.isActive,
-        };
-
-        // Check if we should generate
-        if (!shouldGenerateRecurringInvoice(scheduleConfig)) {
-          throw new RecurringInvoiceError(
-            'Recurring invoice is not due for generation',
-            'NOT_DUE_FOR_GENERATION'
-          );
-        }
-
-        // Check max occurrences - use the original recurringConfig for functions that expect RecurringConfig
-        const generatedCount = template.childInvoices.length;
-        if (recurringConfig.maxOccurrences && generatedCount >= recurringConfig.maxOccurrences) {
-          throw new RecurringInvoiceError(
-            'Maximum occurrences reached for recurring invoice',
-            'MAX_OCCURRENCES_REACHED'
-          );
-        }
-
-        // Generate new invoice number with proper sequencing
-        const newInvoiceNumber = await this.generateUniqueInvoiceNumber(
-          template.invoiceNumber,
-          generatedCount + 1
+      if (template.baseInvoice.client.email) {
+        await EmailService.sendRecurringInvoiceNotification(
+          newInvoice,
+          template.baseInvoice.client.email
         );
-
-        // Calculate new dates
-        const nextDate = (recurringConfig as any).nextGenerationDate || recurringConfig.startDate;
-        const invoiceDate = new Date(nextDate);
-        const dueDate = calculateRecurringInvoiceDueDate(invoiceDate);
-
-        // Create the new invoice
-        const newInvoice = await tx.invoice.create({
-          data: {
-            invoiceNumber: newInvoiceNumber,
-            clientId: template.clientId,
-            businessData: template.businessData as any,
-            clientData: template.clientData as any,
-            lineItems: template.lineItems as any,
-            currencyCode: template.currencyCode,
-            exchangeRate: template.exchangeRate,
-            subtotal: template.subtotal,
-            taxAmount: template.taxAmount,
-            totalAmount: template.totalAmount,
-            status: 'draft',
-            paymentStatus: 'unpaid',
-            isRecurring: false,
-            parentInvoiceId: templateId,
-            invoiceDate,
-            dueDate,
-          },
-          include: {
-            client: true,
-          },
-        });
-
-        // Update the template's next generation date
-        const updatedConfig = updateConfigAfterGeneration(recurringConfig);
-        await tx.invoice.update({
-          where: { id: templateId },
-          data: {
-            recurringConfig: updatedConfig as any,
-          },
-        });
-
-        return this.mapPrismaToEnhancedInvoice(newInvoice);
-      });
-
-      return {
-        success: true,
-        data: result
-      };
-    } catch (error) {
-      if (error instanceof RecurringInvoiceError) {
-        return {
-          success: false,
-          error: error.message
-        };
       }
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'An unexpected error occurred'
-      };
+    } catch (error) {
+      console.error('Failed to send recurring invoice notification:', error);
     }
+
+    return newInvoice;
   }
 
   /**
-   * Get all recurring invoices that are due for generation
+   * Generate all due recurring invoices
    */
-  async getDueRecurringInvoices(): Promise<DatabaseResult<EnhancedInvoice[]>> {
-    return executeDbOperation(async () => {
-      const templates = await prisma.invoice.findMany({
-        where: {
-          isRecurring: true,
-          parentInvoiceId: null,
-        },
-        include: {
-          client: true,
-          childInvoices: true,
-        },
-      });
+  static async generateAllDueInvoices(): Promise<EnhancedInvoice[]> {
+    const activeTemplates = this.getActiveTemplates();
+    const generatedInvoices: EnhancedInvoice[] = [];
 
-      const dueTemplates = templates.filter(template => {
-        const config = template.recurringConfig as unknown as RecurringConfig;
-        const scheduleConfig: RecurringSchedule = {
-          frequency: config.frequency as RecurringFrequency,
-          interval: config.interval,
-          startDate: config.startDate,
-          endDate: config.endDate,
-          maxOccurrences: config.maxOccurrences,
-          isActive: config.isActive,
-        };
-        return shouldGenerateRecurringInvoice(scheduleConfig);
-      });
+    for (const template of activeTemplates) {
+      try {
+        const invoice = await this.generateInvoiceFromTemplate(template.id);
+        if (invoice) {
+          generatedInvoices.push(invoice);
+        }
+      } catch (error) {
+        console.error(`Failed to generate invoice from template ${template.id}:`, error);
+      }
+    }
 
-      return dueTemplates.map(template => this.mapPrismaToEnhancedInvoice(template));
-    });
+    return generatedInvoices;
   }
 
   /**
-   * Pause/resume a recurring invoice
+   * Get all generated invoices for a template
    */
-  async toggleRecurringInvoice(id: string, isActive: boolean): Promise<DatabaseResult<EnhancedInvoice>> {
-    try {
-      const template = await prisma.invoice.findUnique({
-        where: { id },
-      });
+  static getGeneratedInvoices(templateId: string): EnhancedInvoice[] {
+    const template = this.templates.get(templateId);
+    if (!template) return [];
 
-      if (!template || !template.isRecurring) {
-        return {
-          success: false,
-          error: 'Recurring invoice template not found'
-        };
+    return template.generatedInvoices
+      .map(id => this.generatedInvoices.get(id))
+      .filter((invoice): invoice is EnhancedInvoice => invoice !== undefined);
+  }
+
+  /**
+   * Get upcoming generation dates for a template
+   */
+  static getUpcomingDates(templateId: string, count: number = 5): Date[] {
+    const template = this.templates.get(templateId);
+    if (!template) return [];
+
+    const dates: Date[] = [];
+    let currentDate = new Date(template.nextGenerationDate);
+
+    for (let i = 0; i < count; i++) {
+      // Check end date constraint
+      if (template.recurringConfig.endDate && currentDate > template.recurringConfig.endDate) {
+        break;
       }
 
-      const config = template.recurringConfig as unknown as RecurringConfig;
-      const updatedConfig = { ...config, isActive };
+      // Check max occurrences constraint
+      if (template.recurringConfig.maxOccurrences &&
+        template.generatedInvoices.length + i >= template.recurringConfig.maxOccurrences) {
+        break;
+      }
 
-      const updatedInvoice = await prisma.invoice.update({
-        where: { id },
-        data: {
-          recurringConfig: updatedConfig as any,
-        },
-        include: {
-          client: true,
-          childInvoices: {
-            orderBy: { createdAt: 'desc' },
-          },
-        },
-      });
-
-      return {
-        success: true,
-        data: this.mapPrismaToEnhancedInvoice(updatedInvoice)
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'An unexpected error occurred'
-      };
+      dates.push(new Date(currentDate));
+      currentDate = calculateNextDate(
+        currentDate,
+        template.recurringConfig.frequency,
+        template.recurringConfig.interval
+      );
     }
+
+    return dates;
   }
 
   /**
-   * Get recurring invoice statistics
+   * Check if template should be automatically paused
    */
-  async getRecurringInvoiceStats(clientId?: string): Promise<DatabaseResult<{
+  static shouldPauseTemplate(template: RecurringInvoiceTemplate): boolean {
+    const config = template.recurringConfig;
+    const now = new Date();
+
+    // Check end date
+    if (config.endDate && now > config.endDate) {
+      return true;
+    }
+
+    // Check max occurrences
+    if (config.maxOccurrences && template.generatedInvoices.length >= config.maxOccurrences) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Auto-pause templates that have reached their limits
+   */
+  static async autoPauseCompletedTemplates(): Promise<string[]> {
+    const pausedTemplateIds: string[] = [];
+
+    for (const template of this.templates.values()) {
+      if (template.isActive && this.shouldPauseTemplate(template)) {
+        await this.toggleTemplate(template.id, false);
+        pausedTemplateIds.push(template.id);
+      }
+    }
+
+    return pausedTemplateIds;
+  }
+
+  /**
+   * Get statistics for recurring invoices
+   */
+  static getStatistics(): {
     totalTemplates: number;
     activeTemplates: number;
+    pausedTemplates: number;
     totalGenerated: number;
-    totalValue: number;
-    upcomingGenerations: number;
-  }>> {
-    return executeDbOperation(async () => {
-      const whereClause = {
-        isRecurring: true,
-        parentInvoiceId: null,
-        ...(clientId && { clientId }),
-      };
+    upcomingThisMonth: number;
+  } {
+    const templates = Array.from(this.templates.values());
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-      const templates = await prisma.invoice.findMany({
-        where: whereClause,
-        include: {
-          childInvoices: true,
-        },
-      });
-
-      const activeTemplates = templates.filter(template => {
-        const config = template.recurringConfig as unknown as RecurringConfig;
-        return config.isActive;
-      });
-
-      const totalGenerated = templates.reduce((sum, template) => sum + template.childInvoices.length, 0);
-      const totalValue = templates.reduce((sum, template) => sum + template.totalAmount, 0);
-
-      const upcomingGenerations = templates.filter(template => {
-        const config = template.recurringConfig as unknown as RecurringConfig;
-        const scheduleConfig: RecurringSchedule = {
-          frequency: config.frequency as RecurringFrequency,
-          interval: config.interval,
-          startDate: config.startDate,
-          endDate: config.endDate,
-          maxOccurrences: config.maxOccurrences,
-          isActive: config.isActive,
-        };
-        return shouldGenerateRecurringInvoice(scheduleConfig);
-      }).length;
-
-      return {
-        totalTemplates: templates.length,
-        activeTemplates: activeTemplates.length,
-        totalGenerated,
-        totalValue,
-        upcomingGenerations,
-      };
-    });
-  }
-
-  /**
-   * Get future generation dates for a recurring invoice
-   */
-  async getFutureGenerations(templateId: string, maxDates: number = 12): Promise<DatabaseResult<Date[]>> {
-    return executeDbOperation(async () => {
-      const template = await prisma.invoice.findUnique({
-        where: { id: templateId },
-      });
-
-      if (!template || !template.isRecurring) {
-        throw new RecurringInvoiceError(
-          'Recurring invoice template not found',
-          'TEMPLATE_NOT_FOUND'
-        );
-      }
-
-      const config = template.recurringConfig as unknown as RecurringConfig;
-
-      // Ensure we have a nextGenerationDate for the function
-      const configWithNextDate: RecurringConfig = {
-        ...config,
-        nextGenerationDate: config.nextGenerationDate || config.startDate
-      };
-
-      return getFutureGenerationDates(configWithNextDate, maxDates);
-    });
-  }
-
-  /**
-   * Validate recurring configuration
-   */
-  private validateRecurringConfig(config: RecurringConfig | RecurringSchedule): { isValid: boolean; errors: string[] } {
-    // Convert RecurringConfig to RecurringSchedule format for validation
-    const schedule: RecurringSchedule = {
-      frequency: config.frequency as RecurringFrequency,
-      interval: config.interval,
-      startDate: config.startDate,
-      endDate: config.endDate,
-      maxOccurrences: config.maxOccurrences,
-      occurrenceCount: (config as any).occurrenceCount,
-      isActive: config.isActive,
-    };
-
-    const result = validateRecurringSchedule(schedule);
-
-    // Additional validation specific to RecurringConfig
-    const errors = [...result.errors];
-
-    // Validate that either endDate or maxOccurrences is set (or both)
-    if (!config.endDate && !config.maxOccurrences) {
-      errors.push('Either end date or max occurrences must be specified');
-    }
+    const upcomingThisMonth = templates.filter(template => {
+      if (!template.isActive) return false;
+      return template.nextGenerationDate >= now && template.nextGenerationDate < nextMonth;
+    }).length;
 
     return {
-      isValid: errors.length === 0,
-      errors,
+      totalTemplates: templates.length,
+      activeTemplates: templates.filter(t => t.isActive).length,
+      pausedTemplates: templates.filter(t => !t.isActive).length,
+      totalGenerated: Array.from(this.generatedInvoices.values()).length,
+      upcomingThisMonth,
     };
   }
 
   /**
-   * Generate a unique invoice number for recurring invoices
+   * Generate a unique ID
    */
-  private async generateUniqueInvoiceNumber(
-    baseNumber: string,
-    sequenceNumber: number,
-    maxAttempts: number = 100
-  ): Promise<string> {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const candidateNumber = generateRecurringInvoiceNumber(
-        baseNumber,
-        sequenceNumber + attempt
-      );
-
-      // Check if this invoice number already exists
-      const existing = await prisma.invoice.findFirst({
-        where: { invoiceNumber: candidateNumber },
-      });
-
-      if (!existing) {
-        return candidateNumber;
-      }
-    }
-
-    // If we couldn't find a unique number, use timestamp suffix
-    const timestamp = Date.now().toString().slice(-6);
-    return generateRecurringInvoiceNumber(baseNumber, sequenceNumber, 'suffix') + `-${timestamp}`;
+  private static generateId(): string {
+    return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   }
 
   /**
-   * Get currency symbol for a currency code
+   * Initialize with sample data (for development)
    */
-  private getCurrencySymbol(currencyCode: string): string {
-    const symbols: Record<string, string> = {
-      'USD': '$',
-      'EUR': '€',
-      'GBP': '£',
-      'JPY': '¥',
-      'CAD': 'C$',
-      'AUD': 'A$',
-    };
-    return symbols[currencyCode] || currencyCode;
+  static initializeSampleData(): void {
+    // This would typically load from a database
+    // For now, we'll keep the in-memory storage
+    console.log('RecurringInvoiceService initialized');
   }
 
   /**
-   * Get currency name for a currency code
+   * Export templates for backup
    */
-  private getCurrencyName(currencyCode: string): string {
-    const names: Record<string, string> = {
-      'USD': 'US Dollar',
-      'EUR': 'Euro',
-      'GBP': 'British Pound',
-      'JPY': 'Japanese Yen',
-      'CAD': 'Canadian Dollar',
-      'AUD': 'Australian Dollar',
-    };
-    return names[currencyCode] || currencyCode;
+  static exportTemplates(): RecurringInvoiceTemplate[] {
+    return Array.from(this.templates.values());
   }
 
   /**
-   * Get decimal places for a currency
+   * Import templates from backup
    */
-  private getCurrencyDecimalPlaces(currencyCode: string): number {
-    const decimalPlaces: Record<string, number> = {
-      'JPY': 0,
-      'KRW': 0,
-      'VND': 0,
-    };
-    return decimalPlaces[currencyCode] || 2;
-  }
-
-  /**
-   * Map Prisma invoice to EnhancedInvoice
-   */
-  private mapPrismaToEnhancedInvoice(invoice: any): EnhancedInvoice {
-    return {
-      id: invoice.id,
-      business: invoice.businessData,
-      client: invoice.clientData,
-      items: invoice.lineItems,
-      invoiceNumber: invoice.invoiceNumber,
-      invoiceDate: invoice.invoiceDate.toISOString().split('T')[0],
-      sameGst: true, // This would need to be derived from the data
-      globalGst: 0, // This would need to be derived from the data
-      totals: {
-        subtotal: invoice.subtotal,
-        cgst: invoice.taxAmount / 2, // Assuming equal split between CGST and SGST
-        sgst: invoice.taxAmount / 2,
-        igst: 0,
-        round_off: 0,
-        total: invoice.totalAmount,
-      },
-      currency: {
-        code: invoice.currencyCode || 'USD',
-        symbol: this.getCurrencySymbol(invoice.currencyCode || 'USD'),
-        name: this.getCurrencyName(invoice.currencyCode || 'USD'),
-        decimalPlaces: this.getCurrencyDecimalPlaces(invoice.currencyCode || 'USD'),
-      },
-      exchangeRate: invoice.exchangeRate ? {
-        baseCurrency: 'USD',
-        targetCurrency: invoice.currencyCode || 'USD',
-        rate: invoice.exchangeRate,
-        timestamp: new Date(),
-        source: 'stored' as const,
-      } : undefined,
-      isRecurring: invoice.isRecurring || false,
-      recurringConfig: invoice.recurringConfig as unknown as RecurringConfig,
-      parentInvoiceId: invoice.parentInvoiceId,
-      status: invoice.status as any,
-      paymentStatus: invoice.paymentStatus as any,
-      createdAt: invoice.createdAt,
-      updatedAt: invoice.updatedAt,
-      dueDate: invoice.dueDate,
-      paidAt: invoice.paidAt,
-      clientId: invoice.clientId,
-    };
-  }
-
-  /**
-   * Update recurring configuration for an existing template
-   */
-  async updateRecurringConfig(
-    templateId: string,
-    newConfig: Partial<RecurringConfig>
-  ): Promise<DatabaseResult<EnhancedInvoice>> {
-    return executeDbOperation(async () => {
-      const template = await prisma.invoice.findUnique({
-        where: { id: templateId },
-      });
-
-      if (!template || !template.isRecurring) {
-        throw new RecurringInvoiceError(
-          'Recurring invoice template not found',
-          'TEMPLATE_NOT_FOUND'
-        );
-      }
-
-      const currentConfig = template.recurringConfig as unknown as RecurringConfig;
-      const updatedConfig = { ...currentConfig, ...newConfig };
-
-      // Validate the updated config
-      const validation = this.validateRecurringConfig(updatedConfig);
-      if (!validation.isValid) {
-        throw new RecurringInvoiceError(
-          `Invalid recurring configuration: ${validation.errors.join(', ')}`,
-          'INVALID_RECURRING_CONFIG'
-        );
-      }
-
-      const updatedInvoice = await prisma.invoice.update({
-        where: { id: templateId },
-        data: {
-          recurringConfig: updatedConfig as any,
-        },
-        include: {
-          client: true,
-          childInvoices: {
-            orderBy: { createdAt: 'desc' },
-          },
-        },
-      });
-
-      return this.mapPrismaToEnhancedInvoice(updatedInvoice);
+  static importTemplates(templates: RecurringInvoiceTemplate[]): void {
+    templates.forEach(template => {
+      this.templates.set(template.id, template);
     });
   }
 
   /**
-   * Cancel a recurring invoice (set to inactive)
+   * Generate scheduled invoices (for cron jobs)
    */
-  async cancelRecurring(templateId: string): Promise<DatabaseResult<boolean>> {
-    return executeDbOperation(async () => {
-      const template = await prisma.invoice.findUnique({
-        where: { id: templateId },
-      });
-
-      if (!template || !template.isRecurring) {
-        throw new RecurringInvoiceError(
-          'Recurring invoice template not found',
-          'TEMPLATE_NOT_FOUND'
-        );
-      }
-
-      const config = template.recurringConfig as unknown as RecurringConfig;
-      const updatedConfig = { ...config, isActive: false };
-
-      await prisma.invoice.update({
-        where: { id: templateId },
-        data: {
-          recurringConfig: updatedConfig as any,
-        },
-      });
-
-      return true;
-    });
-  }
-
-  /**
-   * Generate scheduled invoices for all due recurring templates
-   */
-  async generateScheduledInvoices(): Promise<DatabaseResult<EnhancedInvoice[]>> {
+  static async generateScheduledInvoices(): Promise<{
+    success: boolean;
+    generatedCount: number;
+    errors: string[];
+  }> {
     try {
-      const dueTemplatesResult = await this.getDueRecurringInvoices();
-      if (!dueTemplatesResult.success || !dueTemplatesResult.data) {
-        return {
-          success: false,
-          error: dueTemplatesResult.error || 'Failed to get due recurring invoices'
-        };
-      }
-
-      const generatedInvoices: EnhancedInvoice[] = [];
-
-      for (const template of dueTemplatesResult.data) {
-        try {
-          const result = await this.generateRecurringInvoice(template.id);
-          if (result.success && result.data) {
-            generatedInvoices.push(result.data);
-          }
-        } catch (error) {
-          // Log error but continue with other templates
-          console.error(`Failed to generate recurring invoice for template ${template.id}:`, error);
-        }
-      }
-
+      const generatedInvoices = await this.generateAllDueInvoices();
       return {
         success: true,
-        data: generatedInvoices
+        generatedCount: generatedInvoices.length,
+        errors: [],
       };
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'An unexpected error occurred'
+        generatedCount: 0,
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
       };
     }
   }
 
   /**
-   * Calculate next generation date for a recurring config
+   * Clear all data (for testing)
    */
-  calculateNextGenerationDate(
-    currentDate: Date,
-    frequency: RecurringFrequency,
-    interval: number
-  ): Date {
-    return calculateNextDate(currentDate, frequency, interval);
+  static clearAll(): void {
+    this.templates.clear();
+    this.generatedInvoices.clear();
   }
 }
 
-// Export a singleton instance
-export const recurringInvoiceService = new RecurringInvoiceService();
+// Initialize the service
+RecurringInvoiceService.initializeSampleData();
+
+// Export a singleton instance for compatibility
+export const recurringInvoiceService = {
+  getDueRecurringInvoices: async () => {
+    const templates = RecurringInvoiceService.getActiveTemplates();
+    const dueTemplates = templates.filter(template => 
+      template.nextGenerationDate <= new Date()
+    );
+    return {
+      success: true,
+      data: dueTemplates.map(template => template.baseInvoice),
+    };
+  },
+  
+  generateRecurringInvoice: async (templateId: string) => {
+    const invoice = await RecurringInvoiceService.generateInvoiceFromTemplate(templateId);
+    return {
+      success: invoice !== null,
+      data: invoice,
+      error: invoice === null ? 'Failed to generate invoice' : undefined,
+    };
+  },
+  
+  getRecurringInvoiceStats: async () => {
+    const stats = RecurringInvoiceService.getStatistics();
+    return {
+      success: true,
+      data: stats,
+    };
+  },
+  
+  getRecurringInvoices: async () => {
+    const templates = RecurringInvoiceService.getAllTemplates();
+    return {
+      success: true,
+      data: templates.map(template => template.baseInvoice),
+    };
+  },
+  
+  getGeneratedInvoices: async (templateId: string) => {
+    const invoices = RecurringInvoiceService.getGeneratedInvoices(templateId);
+    return {
+      success: true,
+      data: invoices,
+    };
+  },
+};

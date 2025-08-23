@@ -23,7 +23,7 @@ import {
 import { formatCurrencyAmount } from "@/lib/utils/currency";
 
 interface RecurringInvoiceManagerProps {
-  recurringInvoices: EnhancedInvoice[];
+  recurringInvoices?: EnhancedInvoice[]; // Make optional
   onEditRecurring: (invoice: EnhancedInvoice) => void;
   onDeleteRecurring: (invoiceId: string) => void;
   onToggleRecurring: (invoiceId: string, isActive: boolean) => void;
@@ -52,6 +52,11 @@ export default function RecurringInvoiceManager({
 
   // Filter and sort invoices
   const filteredAndSortedInvoices = React.useMemo(() => {
+    // Add null/undefined check
+    if (!recurringInvoices || !Array.isArray(recurringInvoices)) {
+      return [];
+    }
+    
     let filtered = recurringInvoices.filter(invoice => {
       // Search filter
       const matchesSearch = searchTerm === '' || 

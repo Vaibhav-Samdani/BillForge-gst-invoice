@@ -25,7 +25,15 @@ export const formatDate = (dateString: string) => {
 // Add numberToWords implementation here or use a library
 export const numberToWords = (num: number, currencyCode: string = "INR"): string => {
   // Currency-specific configurations
-  const currencyConfigs: Record<string, any> = {
+  const currencyConfigs: Record<string, {
+    localeCode: string;
+    currencyOptions: {
+      name: string;
+      plural: string;
+      symbol: string;
+      fractionalUnit: { name: string; plural: string; symbol: string };
+    };
+  }> = {
     INR: {
       localeCode: "en-IN",
       currencyOptions: {

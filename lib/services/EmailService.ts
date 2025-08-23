@@ -33,7 +33,7 @@ export class EmailService {
   ): Promise<boolean> {
     try {
       const template = this.generatePaymentConfirmationTemplate(invoice, payment);
-      
+
       const emailOptions: EmailOptions = {
         to: clientEmail,
         from: this.fromEmail,
@@ -61,7 +61,7 @@ export class EmailService {
   ): Promise<boolean> {
     try {
       const template = this.generatePaymentReceiptTemplate(invoice, payment);
-      
+
       const emailOptions: EmailOptions = {
         to: clientEmail,
         from: this.fromEmail,
@@ -99,7 +99,7 @@ export class EmailService {
   ): Promise<boolean> {
     try {
       const template = this.generatePaymentNotificationTemplate(invoice, payment);
-      
+
       const emailOptions: EmailOptions = {
         to: businessEmail,
         from: this.fromEmail,
@@ -112,6 +112,86 @@ export class EmailService {
       return true;
     } catch (error) {
       console.error('Error sending payment notification:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Send email verification for client registration
+   */
+  static async sendEmailVerification(
+    clientEmail: string,
+    verificationToken: string,
+    clientName: string
+  ): Promise<boolean> {
+    try {
+      const template = this.generateEmailVerificationTemplate(clientEmail, verificationToken, clientName);
+
+      const emailOptions: EmailOptions = {
+        to: clientEmail,
+        from: this.fromEmail,
+        subject: template.subject,
+        html: template.html,
+        text: template.text,
+      };
+
+      await this.sendEmail(emailOptions);
+      return true;
+    } catch (error) {
+      console.error('Error sending email verification:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Send recurring invoice notification to client
+   */
+  static async sendRecurringInvoiceNotification(
+    invoice: EnhancedInvoice,
+    clientEmail: string
+  ): Promise<boolean> {
+    try {
+      const template = this.generateRecurringInvoiceTemplate(invoice);
+
+      const emailOptions: EmailOptions = {
+        to: clientEmail,
+        from: this.fromEmail,
+        subject: template.subject,
+        html: template.html,
+        text: template.text,
+      };
+
+      await this.sendEmail(emailOptions);
+      return true;
+    } catch (error) {
+      console.error('Error sending recurring invoice notification:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Send invoice overdue reminder to client
+   */
+  static async sendOverdueReminder(
+    invoice: EnhancedInvoice,
+    clientEmail: string,
+    daysOverdue: number
+  ): Promise<boolean> {
+    try {
+      const template = this.generateOverdueReminderTemplate(invoice, daysOverdue);
+
+      const emailOptions: EmailOptions = {
+        to: clientEmail,
+        from: this.fromEmail,
+        subject: template.subject,
+        html: template.html,
+        text: template.text,
+      };
+
+      await this.sendEmail(emailOptions);
+      return true;
+    } catch (error) {
+      console.error('Error sending overdue reminder:', error);
       return false;
     }
   }
@@ -444,6 +524,317 @@ Payment Details:
 - Payment Method: ${payment.paymentMethod.replace('_', ' ').toUpperCase()}
 
 The invoice status has been automatically updated to "Paid" and a confirmation email has been sent to the client.
+    `;
+
+    return { subject, html, text };
+  }
+
+  /**
+   * Generate email verification template
+   */
+  private static generateEmailVerificationTemplate(
+    clientEmail: string,
+    verificationToken: string,
+    clientName: string
+  ): EmailTemplate {
+    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(clientEmail)}`;
+
+    const subject = `Verify Your Email Address - ${this.companyName}`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${subject}</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background: #f9f9f9; }
+            .button { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Welcome to ${this.companyName}!</h1>
+              <p>Please verify your email address</p>
+            </div>
+            
+            <div class="content">
+              <p>Dear ${clientName},</p>
+              
+              <p>Thank you for registering with ${this.companyName}. To complete your registration and access your account, please verify your email address by clicking the button below:</p>
+              
+              <div style="text-align: center;">
+                <a href="${verificationUrl}" class="button">Verify Email Address</a>
+              </div>
+              
+              <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+              <p style="word-break: break-all; color: #2563eb;">${verificationUrl}</p>
+              
+              <p>This verification link will expire in 24 hours for security reasons.</p>
+              
+              <p>If you didn't create an account with us, please ignore this email.</p>
+              
+              <p>Best regards,<br>
+              ${this.companyName} Team</p>
+            </div>
+            
+            <div class="footer">
+              <p>This is an automated email. Please do not reply to this message.</p>
+              <p>© ${new Date().getFullYear()} ${this.companyName}. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const text = `
+Welcome to ${this.companyName}!
+
+Dear ${clientName},
+
+Thank you for registering with ${this.companyName}. To complete your registration and access your account, please verify your email address by visiting this link:
+
+${verificationUrl}
+
+This verification link will expire in 24 hours for security reasons.
+
+If you didn't create an account with us, please ignore this email.
+
+Best regards,
+${this.companyName} Team
+    `;
+
+    return { subject, html, text };
+  }
+
+  /**
+   * Generate recurring invoice notification template
+   */
+  private static generateRecurringInvoiceTemplate(
+    invoice: EnhancedInvoice
+  ): EmailTemplate {
+    const formatCurrency = (amount: number, currency: string) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+      }).format(amount);
+    };
+
+    const subject = `New Invoice Generated - ${invoice.invoiceNumber}`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${subject}</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background: #f9f9f9; }
+            .details { background: white; padding: 15px; border-radius: 5px; margin: 15px 0; }
+            .detail-row { display: flex; justify-content: space-between; margin: 8px 0; }
+            .label { font-weight: bold; color: #666; }
+            .value { color: #333; }
+            .button { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>New Invoice Available</h1>
+              <p>Your recurring invoice has been generated</p>
+            </div>
+            
+            <div class="content">
+              <p>Dear ${invoice.client.name},</p>
+              
+              <p>A new invoice has been generated for your recurring service. Here are the details:</p>
+              
+              <div class="details">
+                <h3>Invoice Details</h3>
+                <div class="detail-row">
+                  <span class="label">Invoice Number:</span>
+                  <span class="value">${invoice.invoiceNumber}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Invoice Date:</span>
+                  <span class="value">${new Date(invoice.invoiceDate).toLocaleDateString()}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Due Date:</span>
+                  <span class="value">${new Date(invoice.dueDate).toLocaleDateString()}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Total Amount:</span>
+                  <span class="value"><strong>${formatCurrency(invoice.totals.total, invoice.currency.code)}</strong></span>
+                </div>
+              </div>
+              
+              <div style="text-align: center;">
+                <a href="${process.env.NEXT_PUBLIC_APP_URL}/client/invoices" class="button">View Invoice</a>
+              </div>
+              
+              <p>You can view and pay this invoice through your client portal. If you have any questions, please don't hesitate to contact us.</p>
+              
+              <p>Best regards,<br>
+              ${this.companyName} Team</p>
+            </div>
+            
+            <div class="footer">
+              <p>This is an automated email. Please do not reply to this message.</p>
+              <p>© ${new Date().getFullYear()} ${this.companyName}. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const text = `
+New Invoice Available - ${invoice.invoiceNumber}
+
+Dear ${invoice.client.name},
+
+A new invoice has been generated for your recurring service. Here are the details:
+
+Invoice Details:
+- Invoice Number: ${invoice.invoiceNumber}
+- Invoice Date: ${new Date(invoice.invoiceDate).toLocaleDateString()}
+- Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}
+- Total Amount: ${formatCurrency(invoice.totals.total, invoice.currency.code)}
+
+You can view and pay this invoice through your client portal at:
+${process.env.NEXT_PUBLIC_APP_URL}/client/invoices
+
+If you have any questions, please don't hesitate to contact us.
+
+Best regards,
+${this.companyName} Team
+    `;
+
+    return { subject, html, text };
+  }
+
+  /**
+   * Generate overdue reminder template
+   */
+  private static generateOverdueReminderTemplate(
+    invoice: EnhancedInvoice,
+    daysOverdue: number
+  ): EmailTemplate {
+    const formatCurrency = (amount: number, currency: string) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+      }).format(amount);
+    };
+
+    const subject = `Invoice Overdue - ${invoice.invoiceNumber} (${daysOverdue} days overdue)`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${subject}</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #dc2626; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background: #f9f9f9; }
+            .details { background: white; padding: 15px; border-radius: 5px; margin: 15px 0; }
+            .detail-row { display: flex; justify-content: space-between; margin: 8px 0; }
+            .label { font-weight: bold; color: #666; }
+            .value { color: #333; }
+            .button { display: inline-block; background: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+            .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Invoice Overdue</h1>
+              <p>Payment is ${daysOverdue} days past due</p>
+            </div>
+            
+            <div class="content">
+              <p>Dear ${invoice.client.name},</p>
+              
+              <p>This is a friendly reminder that Invoice ${invoice.invoiceNumber} is currently ${daysOverdue} days overdue. The total amount due is ${formatCurrency(invoice.totals.total, invoice.currency.code)}.</p>
+              
+              <div class="details">
+                <h3>Invoice Details</h3>
+                <div class="detail-row">
+                  <span class="label">Invoice Number:</span>
+                  <span class="value">${invoice.invoiceNumber}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Due Date:</span>
+                  <span class="value">${new Date(invoice.dueDate).toLocaleDateString()}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Days Overdue:</span>
+                  <span class="value">${daysOverdue}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Amount Due:</span>
+                  <span class="value"><strong>${formatCurrency(invoice.totals.total, invoice.currency.code)}</strong></span>
+                </div>
+              </div>
+              
+              <div style="text-align: center;">
+                <a href="${process.env.NEXT_PUBLIC_APP_URL}/client/invoices" class="button">Pay Now</a>
+              </div>
+              
+              <p>Please process this payment as soon as possible to avoid any late fees or service interruptions. If you have any questions or need to discuss payment arrangements, please contact us immediately.</p>
+              
+              <p>Thank you for your prompt attention to this matter.</p>
+              
+              <p>Best regards,<br>
+              ${this.companyName} Team</p>
+            </div>
+            
+            <div class="footer">
+              <p>This is an automated email. Please do not reply to this message.</p>
+              <p>© ${new Date().getFullYear()} ${this.companyName}. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const text = `
+Invoice Overdue - ${invoice.invoiceNumber} (${daysOverdue} days overdue)
+
+Dear ${invoice.client.name},
+
+This is a friendly reminder that Invoice ${invoice.invoiceNumber} is currently ${daysOverdue} days overdue. The total amount due is ${formatCurrency(invoice.totals.total, invoice.currency.code)}.
+
+Invoice Details:
+- Invoice Number: ${invoice.invoiceNumber}
+- Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}
+- Days Overdue: ${daysOverdue}
+- Amount Due: ${formatCurrency(invoice.totals.total, invoice.currency.code)}
+
+Please process this payment as soon as possible to avoid any late fees or service interruptions. You can pay online at:
+${process.env.NEXT_PUBLIC_APP_URL}/client/invoices
+
+If you have any questions or need to discuss payment arrangements, please contact us immediately.
+
+Thank you for your prompt attention to this matter.
+
+Best regards,
+${this.companyName} Team
     `;
 
     return { subject, html, text };

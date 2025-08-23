@@ -109,10 +109,30 @@ export default function PaymentConfirmation({
               <span className="text-gray-600">Subtotal:</span>
               <span>{formatCurrency(invoice.totals.subtotal, invoice.currency.code)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Tax:</span>
-              <span>{formatCurrency(invoice.totals.tax, invoice.currency.code)}</span>
-            </div>
+            {invoice.totals.cgst > 0 && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">CGST:</span>
+                <span>{formatCurrency(invoice.totals.cgst, invoice.currency.code)}</span>
+              </div>
+            )}
+            {invoice.totals.sgst > 0 && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">SGST:</span>
+                <span>{formatCurrency(invoice.totals.sgst, invoice.currency.code)}</span>
+              </div>
+            )}
+            {invoice.totals.igst > 0 && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">IGST:</span>
+                <span>{formatCurrency(invoice.totals.igst, invoice.currency.code)}</span>
+              </div>
+            )}
+            {invoice.totals.round_off !== 0 && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">Round Off:</span>
+                <span>{formatCurrency(invoice.totals.round_off, invoice.currency.code)}</span>
+              </div>
+            )}
             <div className="border-t pt-2">
               <div className="flex justify-between font-semibold">
                 <span>Total Paid:</span>
@@ -135,7 +155,7 @@ export default function PaymentConfirmation({
             Download Receipt
           </Button>
         )}
-        
+
         {onSendReceipt && (
           <Button
             onClick={onSendReceipt}
@@ -146,7 +166,7 @@ export default function PaymentConfirmation({
             Email Receipt
           </Button>
         )}
-        
+
         {onViewInvoice && (
           <Button
             onClick={onViewInvoice}
@@ -156,7 +176,7 @@ export default function PaymentConfirmation({
             View Invoice
           </Button>
         )}
-        
+
         {onBackToInvoices && (
           <Button
             onClick={onBackToInvoices}

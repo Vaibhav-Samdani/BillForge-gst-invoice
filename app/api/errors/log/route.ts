@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
 
     // In a real application, query from database
     // For now, return a placeholder response
-    const logs = []; // Would fetch from database based on filters
+    const logs: any[] = []; // Would fetch from database based on filters
 
     return NextResponse.json({
       logs,

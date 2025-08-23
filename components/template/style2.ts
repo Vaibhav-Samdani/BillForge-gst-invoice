@@ -1,13 +1,10 @@
-import { Font, StyleSheet } from "@react-pdf/renderer";
-
-// type FontWeight = 'normal' | 'bold' | 'light' | 'medium' | 'semibold' | 'extrabold' | 'black' | undefined;
-// type FontStyle = 'normal' | 'italic' | 'oblique' | undefined;
+import { Font, StyleSheet } from '@react-pdf/renderer';
 
 Font.register({
   family: "Inter",
   fonts: [
     {
-      src: "/fonts/Inter-Regular.ttf", // relative to public folder
+      src: "/fonts/Inter-Regular.ttf",
       fontStyle: "normal",
       fontWeight: "normal",
     },
@@ -25,168 +22,329 @@ Font.register({
 });
 
 export const styles = StyleSheet.create({
-  // component wise styles
-  bold: {
-    fontWeight: "bold",
-  },
-
+  // Page Layout
   page: {
-    margin: "0 auto",
-    padding: "20px",
-    boxSizing: "border-box",
-    position: "relative",
-    backgroundColor: "white",
-    border: "1px solid #ccc",
-    fontFamily: "Inter",
-  },
-  title: {
-    fontSize: "24px",
-    textAlign: "center",
-    fontWeight: "bold",
-    padding: 10,
-    fontFamily: "Inter",
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingVertical: 0,
-    display: "flex",
-    flexDirection: "row",
-    minHeight: "150px",
-    width: "100%",
-    fontFamily: "Inter",
+    fontFamily: 'Inter',
+    fontSize: 10,
+    paddingTop: 40,
+    paddingBottom: 40,
+    paddingHorizontal: 40,
+    backgroundColor: '#ffffff',
+    color: '#1a1a1a',
   },
 
-  headerLeft: {
-    padding: "12px 16px 10px 16px",
-    width: "50%",
-    display: "flex",
-    flexDirection: "column",
-    gap: "2px",
-    border: "1px solid #e0e0e0",
-    height: "100%",
-    fontSize: "12px",
-    fontFamily: "Inter",
+  // Header Section
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 40,
+    paddingBottom: 20,
+    borderBottomWidth: 2,
+    borderBottomColor: '#e5e7eb',
+  },
+
+  // Company Info (Left Side)
+  companySection: {
+    flex: 1,
   },
   companyName: {
-    fontWeight: "bold",
-    textTransform: "uppercase",
-    marginBottom: "2px",
-    fontSize: "16px",
-    fontFamily: "Inter",
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  address: {
-    fontSize: "12px",
-    marginBottom: "2px",
-    fontFamily: "Inter",
+  companyTagline: {
+    fontSize: 9,
+    color: '#6b7280',
+    marginBottom: 12,
+    fontStyle: 'italic',
   },
-
-  headerRight: {
-    textAlign: "right",
-    padding: "12px 16px 10px 16px",
-    border: "1px solid #e0e0e0",
-    fontSize: "12px",
-    borderLeft: "0px solid #ccc",
-    width: "50%",
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
-    height: "100%",
-    fontFamily: "Inter",
-  },
-  billedTo: {
-    padding: "12px 16px",
-    border: "1px solid #e0e0e0",
-    borderTop: "0px solid #ccc",
-    fontSize: "12px",
-    margin: "0 20px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "2px",
-    fontFamily: "Inter",
-  },
-  billedToName: {
-    margin: "2px 0",
-    textTransform: "uppercase",
-    fontFamily: "Inter",
+  companyDetails: {
+    fontSize: 9,
+    color: '#374151',
+    lineHeight: 1.4,
   },
 
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    fontSize: "10px",
-    padding: "0px 21px",
-    border: "1px solid #e0e0e0",
-    fontFamily: "Inter",
+  // Invoice Title & Details (Right Side)
+  invoiceSection: {
+    alignItems: 'flex-end',
   },
-  th: {
-    // padding: "6px",
-    fontWeight: "bold",
-    textAlign: "center",
-    border: "0px solid #e0e0e0",
-    display: "flex",
-    flexDirection: "row",
-    backgroundColor: "#f3f3f3",
-    fontFamily: "Inter",
+  invoiceTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 12,
+    letterSpacing: 1,
   },
-  td: {
-    border: "1px solid #e0e0e0",
-    padding: "4px",
-    textAlign: "left",
-    whiteSpace: "nowrap",
-    fontFamily: "Inter",
+  invoiceDetails: {
+    alignItems: 'flex-end',
   },
-  auto: {
-    width: "auto",
+  invoiceDetailRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+    alignItems: 'center',
   },
-  goods: {
-    minWidth: "85px",
+  invoiceLabel: {
+    fontSize: 9,
+    color: '#6b7280',
+    marginRight: 8,
+    minWidth: 80,
+    textAlign: 'right',
   },
-  quantity: {
-    minWidth: "25px",
-    maxWidth: "55px",
+  invoiceValue: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#111827',
   },
-  noBorder: {
-    border: "0px solid #e0e0e0",
+
+  // Billing Section
+  billingSection: {
+    flexDirection: 'row',
+    marginBottom: 30,
+    gap: 40,
   },
-  firstColumn: {
-    minWidth: "30px",
-    textAlign: "left",
-    fontFamily: "Inter",
-    padding: "4px",
+  billingColumn: {
+    flex: 1,
   },
-  lastColumn: {
-    textAlign: "left",
-    fontFamily: "Inter",
-    padding: "4px",
+  billingHeader: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#374151',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  amount: {
-    fontWeight: "bold",
-    fontFamily: "Inter",
-    minWidth: "100px",
-    maxWidth: "100px",
-    textAlign: "right",
+  billingName: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 6,
   },
+  billingDetails: {
+    fontSize: 9,
+    color: '#4b5563',
+    lineHeight: 1.4,
+  },
+
+  // Comments Section
+  commentsSection: {
+    marginBottom: 25,
+    padding: 12,
+    backgroundColor: '#f9fafb',
+    borderRadius: 4,
+    borderLeftWidth: 3,
+    borderLeftColor: '#3b82f6',
+  },
+  commentsHeader: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#374151',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  commentsText: {
+    fontSize: 8,
+    color: '#6b7280',
+    fontStyle: 'italic',
+  },
+
+  // Order Details Section
+  orderDetailsSection: {
+    marginBottom: 20,
+  },
+  orderDetailsTable: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 4,
+  },
+  orderDetailsHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#f3f4f6',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  orderDetailsCell: {
+    flex: 1,
+    padding: 8,
+    borderRightWidth: 1,
+    borderRightColor: '#e5e7eb',
+  },
+  orderDetailsLastCell: {
+    flex: 1,
+    padding: 8,
+  },
+  orderDetailsHeaderText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#374151',
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  orderDetailsRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+    minHeight: 30,
+  },
+  orderDetailsValue: {
+    fontSize: 9,
+    color: '#4b5563',
+    textAlign: 'center',
+  },
+
+  // Items Table
+  itemsTable: {
+    marginBottom: 25,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  itemsHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#1f2937',
+    paddingVertical: 12,
+  },
+  itemsHeaderCell: {
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+  },
+  itemsHeaderText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+  itemsRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+    minHeight: 35,
+    alignItems: 'center',
+  },
+  itemsCell: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    justifyContent: 'center',
+  },
+  itemsCellText: {
+    fontSize: 9,
+    color: '#374151',
+  },
+  itemsCellTextCenter: {
+    fontSize: 9,
+    color: '#374151',
+    textAlign: 'center',
+  },
+  itemsCellTextRight: {
+    fontSize: 9,
+    color: '#374151',
+    textAlign: 'right',
+  },
+
+  // Totals Section
+  totalsSection: {
+    alignItems: 'flex-end',
+    marginBottom: 30,
+  },
+  totalsTable: {
+    width: 250,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 4,
+  },
+  totalsRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  totalsLastRow: {
+    flexDirection: 'row',
+    backgroundColor: '#1f2937',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  totalsLabel: {
+    flex: 1,
+    fontSize: 9,
+    color: '#4b5563',
+    textTransform: 'uppercase',
+  },
+  totalsValue: {
+    fontSize: 10,
+    color: '#111827',
+    textAlign: 'right',
+    fontWeight: 'bold',
+  },
+  totalsFinalLabel: {
+    flex: 1,
+    fontSize: 11,
+    color: '#ffffff',
+    textTransform: 'uppercase',
+    fontWeight: 'bold',
+  },
+  totalsFinalValue: {
+    fontSize: 12,
+    color: '#ffffff',
+    textAlign: 'right',
+    fontWeight: 'bold',
+  },
+
+  // Footer Section
   footer: {
-    paddingHorizontal: "20px",
-    paddingVertical: "10px",
-    // marginTop: 32,
-    fontSize: "10px",
-    fontFamily: "Inter",
+    marginTop: 30,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
   },
-  footerDetails: {
-    marginBottom: 18,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    fontFamily: "Inter",
-    gap: "10px",
+  paymentInstructions: {
+    marginBottom: 20,
+  },
+  paymentHeader: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: '#374151',
+    marginBottom: 4,
+  },
+  paymentText: {
+    fontSize: 8,
+    color: '#6b7280',
+    lineHeight: 1.4,
+  },
 
+  // Thank You Section
+  thankYouSection: {
+    textAlign: 'center',
+    marginTop: 25,
+    paddingTop: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
   },
-  signature: {
-    textAlign: "right",
-    marginTop: 40,
+  thankYouText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  authorizedSignatory: {
-    marginTop: 50,
+
+  // Utility Classes
+  bold: {
+    fontWeight: 'bold',
+  },
+  center: {
+    textAlign: 'center',
+  },
+  right: {
+    textAlign: 'right',
+  },
+  uppercase: {
+    textTransform: 'uppercase',
   },
 });

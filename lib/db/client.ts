@@ -2,6 +2,8 @@ import { PrismaClient } from "../generated/prisma"
 
 const prisma = new PrismaClient()
 
+export { prisma }
+
 export interface ClientUser {
   id: string
   email: string
@@ -55,6 +57,8 @@ export async function createClient(data: {
   name: string
   company?: string
   verificationToken?: string
+  encryptedEmail?: string
+  emailHash?: string
 }): Promise<ClientUser | null> {
   try {
     const client = await prisma.clientUser.create({

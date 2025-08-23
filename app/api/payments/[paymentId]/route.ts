@@ -8,10 +8,10 @@ import { PaymentTrackingService } from '../../../../lib/services/PaymentTracking
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { paymentId: string } }
+  { params }: { params: Promise<{ paymentId: string }> }
 ) {
   try {
-    const { paymentId } = params;
+    const { paymentId } = await params;
 
     // Get payment tracking data
     const trackingData = await PaymentTrackingService.getPaymentTrackingData(paymentId);
@@ -40,10 +40,10 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { paymentId: string } }
+  { params }: { params: Promise<{ paymentId: string }> }
 ) {
   try {
-    const { paymentId } = params;
+    const { paymentId } = await params;
     const body = await request.json();
 
     // Validate the update request

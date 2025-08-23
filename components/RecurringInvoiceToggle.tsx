@@ -5,9 +5,12 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { RecurringConfig } from "@/lib/types/invoice";
+import { RecurringConfig, EnhancedInvoice } from "@/lib/types/invoice";
 import { Clock, Settings, Calendar } from "lucide-react";
 import RecurringInvoiceForm from "./RecurringInvoiceForm";
+import { RecurringInvoiceService } from "@/lib/services/RecurringInvoiceService";
+import useInvoiceStore from "@/lib/store";
+import { toast } from "sonner";
 
 interface RecurringInvoiceToggleProps {
   config: RecurringConfig | null;
@@ -26,7 +29,45 @@ export default function RecurringInvoiceToggle({
 }: RecurringInvoiceToggleProps) {
   const [showSettings, setShowSettings] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (config) {
+      try {
+        // Get current invoice data from store
+        const store = useInvoiceStore.getState();
+        const currentInvoice: EnhancedInvoice = {
+          id: `invoice-${Date.now()}`,
+          invoiceNumber: store.invoiceNumber,
+          invoiceDate: store.invoiceDate,
+          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          business: store.business,
+          client: store.client,
+          items: store.items,
+          totals: store.totals,
+          currency: store.selectedCurrency,
+          status: 'draft',
+          paymentStatus: 'unpaid',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          recurringConfig: undefined,
+          isRecurring: true,
+          sameGst: false,
+          globalGst: 0,
+          clientId: store.client.email || `client-${Date.now()}`,
+        };
+
+        // Create or update the recurring template
+        const template = await RecurringInvoiceService.createRecurringTemplate(
+          currentInvoice,
+          config,
+          `Recurring ${store.invoiceNumber}`
+        );
+
+        toast.success(`Recurring template saved: ${template.templateName}`);
+      } catch (error) {
+        toast.error("Failed to save recurring template");
+        console.error("Save recurring template error:", error);
+      }
+    }
     setShowSettings(false);
   };
 

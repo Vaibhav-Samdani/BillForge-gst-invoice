@@ -96,7 +96,7 @@ const mockDetailedInvoice: DetailedInvoice = {
   id: '1',
   invoiceNumber: 'INV-001',
   status: 'sent',
-  paymentStatus: 'overdue',
+  paymentStatus: 'unpaid',
   invoiceDate: '2025-01-01',
   dueDate: '2025-01-15',
   createdAt: '2025-01-01',

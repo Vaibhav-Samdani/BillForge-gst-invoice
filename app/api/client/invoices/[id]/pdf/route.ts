@@ -4,10 +4,11 @@ import { prisma } from "@/lib/db/client"
 import { renderToBuffer } from "@react-pdf/renderer"
 import { InvoiceDoc } from "@/components/template/Invoice"
 import React from "react"
+import { SUPPORTED_CURRENCIES } from "@/lib/types/invoice"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -19,9 +20,11 @@ export async function GET(
       )
     }
 
+    const { id } = await params
+
     const invoice = await prisma.invoice.findFirst({
       where: {
-        id: params.id,
+        id: id,
         clientId: user.id // Ensure client can only access their own invoices
       }
     })
@@ -38,17 +41,26 @@ export async function GET(
     const client = invoice.clientData as any
     const items = invoice.lineItems as any[]
     
+    // Get currency information
+    const currencyInfo = SUPPORTED_CURRENCIES.find(c => c.code === invoice.currencyCode) || SUPPORTED_CURRENCIES[0]
+    
     const currency = {
-      code: invoice.currencyCode,
-      symbol: getCurrencySymbol(invoice.currencyCode),
-      name: getCurrencyName(invoice.currencyCode),
-      decimalPlaces: 2
+      code: currencyInfo.code,
+      symbol: currencyInfo.symbol,
+      name: currencyInfo.name,
+      decimalPlaces: currencyInfo.decimalPlaces
     }
 
+    // Ensure totals structure matches what InvoiceDoc expects
+    // Note: The current schema only has taxAmount, so we'll split it for CGST/SGST display
+    const taxAmount = invoice.taxAmount || 0;
     const totals = {
-      subtotal: invoice.subtotal,
-      tax: invoice.taxAmount,
-      total: invoice.totalAmount
+      subtotal: invoice.subtotal || 0,
+      cgst: taxAmount / 2, // Split tax equally between CGST and SGST
+      sgst: taxAmount / 2,
+      igst: 0, // IGST is 0 when CGST/SGST are used
+      round_off: 0, // Not tracked in current schema
+      total: invoice.totalAmount || 0
     }
 
     // Generate PDF
@@ -61,14 +73,14 @@ export async function GET(
         invoiceDate: invoice.invoiceDate.toISOString().split('T')[0],
         totals,
         currency
-      })
+      }) as any
     )
 
     // Return PDF as response
     return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`
+        'Content-Disposition': `attachment; filename="invoice-${invoice.invoiceNumber}-${currency.code}.pdf"`
       }
     })
 
@@ -79,30 +91,4 @@ export async function GET(
       { status: 500 }
     )
   }
-}
-
-function getCurrencySymbol(code: string): string {
-  const symbols: Record<string, string> = {
-    'USD': '$',
-    'EUR': '€',
-    'GBP': '£',
-    'CAD': 'C$',
-    'AUD': 'A$',
-    'JPY': '¥',
-    'INR': '₹'
-  }
-  return symbols[code] || '$'
-}
-
-function getCurrencyName(code: string): string {
-  const names: Record<string, string> = {
-    'USD': 'US Dollar',
-    'EUR': 'Euro',
-    'GBP': 'British Pound',
-    'CAD': 'Canadian Dollar',
-    'AUD': 'Australian Dollar',
-    'JPY': 'Japanese Yen',
-    'INR': 'Indian Rupee'
-  }
-  return names[code] || 'US Dollar'
 }
