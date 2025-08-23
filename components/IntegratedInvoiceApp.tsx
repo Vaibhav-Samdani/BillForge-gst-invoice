@@ -332,7 +332,7 @@ const IntegratedInvoiceApp: React.FC<IntegratedInvoiceAppProps> = ({
 
           {/* Main Invoice Generator Tab */}
           <TabsContent value="invoice" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <section className="space-y-6">
                 <CurrencyErrorBoundary>
                   <BusinessInfoForm />
@@ -366,7 +366,11 @@ const IntegratedInvoiceApp: React.FC<IntegratedInvoiceAppProps> = ({
                 </PaymentErrorBoundary>
               </section>
 
-              <aside>
+              <aside className="space-y-4">
+                <div className="bg-white p-4 rounded-lg shadow-sm border">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-2">📄 Invoice Preview</h2>
+                  <p className="text-sm text-gray-600">Live preview of your invoice</p>
+                </div>
                 <InvoicePreview />
               </aside>
             </div>

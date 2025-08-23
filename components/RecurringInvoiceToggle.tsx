@@ -87,6 +87,37 @@ export default function RecurringInvoiceToggle({
     return frequencyMap[frequency] || frequency;
   };
 
+  const formatDate = (date: Date | string | number) => {
+    try {
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) {
+        return 'Invalid date';
+      }
+      return dateObj.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
+  };
+
+  const formatSimpleDate = (date: Date | string | number) => {
+    try {
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) {
+        return 'Invalid date';
+      }
+      return dateObj.toLocaleDateString();
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid date';
+    }
+  };
+
   if (showSettings) {
     return (
       <RecurringInvoiceForm
@@ -146,19 +177,14 @@ export default function RecurringInvoiceToggle({
             <div className="text-sm text-muted-foreground">
               <span>Next generation: </span>
               <span className="font-medium">
-                {config.nextGenerationDate.toLocaleDateString('en-US', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric'
-                })}
+                {formatDate(config.nextGenerationDate)}
               </span>
             </div>
             
             {config.endDate && (
               <div className="text-sm text-muted-foreground">
                 <span>Ends: </span>
-                <span>{config.endDate.toLocaleDateString()}</span>
+                <span>{formatSimpleDate(config.endDate)}</span>
               </div>
             )}
             

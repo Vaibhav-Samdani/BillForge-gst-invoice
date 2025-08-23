@@ -13,11 +13,6 @@ Font.register({
       fontStyle: "normal",
       fontWeight: "bold",
     },
-    {
-      src: "/fonts/Inter-Variable.ttf",
-      fontStyle: "normal",
-      fontWeight: undefined,
-    },
   ],
 });
 
@@ -54,13 +49,11 @@ export const styles = StyleSheet.create({
     color: '#111827',
     marginBottom: 8,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   companyTagline: {
     fontSize: 9,
     color: '#6b7280',
     marginBottom: 12,
-    fontStyle: 'italic',
   },
   companyDetails: {
     fontSize: 9,
@@ -77,7 +70,6 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 12,
-    letterSpacing: 1,
   },
   invoiceDetails: {
     alignItems: 'flex-end',
@@ -104,10 +96,10 @@ export const styles = StyleSheet.create({
   billingSection: {
     flexDirection: 'row',
     marginBottom: 30,
-    gap: 40,
   },
   billingColumn: {
     flex: 1,
+    marginRight: 20,
   },
   billingHeader: {
     fontSize: 11,
@@ -115,7 +107,6 @@ export const styles = StyleSheet.create({
     color: '#374151',
     marginBottom: 8,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   billingName: {
     fontSize: 12,
@@ -134,7 +125,6 @@ export const styles = StyleSheet.create({
     marginBottom: 25,
     padding: 12,
     backgroundColor: '#f9fafb',
-    borderRadius: 4,
     borderLeftWidth: 3,
     borderLeftColor: '#3b82f6',
   },
@@ -148,7 +138,6 @@ export const styles = StyleSheet.create({
   commentsText: {
     fontSize: 8,
     color: '#6b7280',
-    fontStyle: 'italic',
   },
 
   // Order Details Section
@@ -158,7 +147,6 @@ export const styles = StyleSheet.create({
   orderDetailsTable: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 4,
   },
   orderDetailsHeader: {
     flexDirection: 'row',
@@ -200,8 +188,6 @@ export const styles = StyleSheet.create({
     marginBottom: 25,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 4,
-    overflow: 'hidden',
   },
   itemsHeader: {
     flexDirection: 'row',
@@ -255,7 +241,6 @@ export const styles = StyleSheet.create({
     width: 250,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 4,
   },
   totalsRow: {
     flexDirection: 'row',
@@ -331,7 +316,6 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1f2937',
     textTransform: 'uppercase',
-    letterSpacing: 1,
   },
 
   // Utility Classes
